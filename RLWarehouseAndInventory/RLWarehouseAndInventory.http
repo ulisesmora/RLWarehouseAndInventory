@@ -1,0 +1,6 @@
+@RLWarehouseAndInventory_HostAddress = http://localhost:5090
+
+GET {{RLWarehouseAndInventory_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

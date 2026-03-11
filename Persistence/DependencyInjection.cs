@@ -1,0 +1,23 @@
+﻿using Inventory.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Persistence
+{
+    public static class DependencyInjection
+    {
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        {
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+            services.AddDbContext<InventoryDbContext>(options =>
+                options.UseNpgsql(connectionString));
+
+
+
+
+            return services;
+        }
+    }
+}

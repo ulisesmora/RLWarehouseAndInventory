@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="16.0.0" />
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="iTextSharp.LGPLv2.Core" Version="3.7.12" />
+    <PackageReference Include="MediatR" Version="14.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Inventory.Domain.csproj" />
+    <ProjectReference Include="..\Persistence\Inventory.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Categories\Commons\Models\" />
+    <Folder Include="Lots\Commons\Models\" />
+    <Folder Include="StatusCatalogs\Commons\Models\" />
+    <Folder Include="StockMovements\Commons\Models\" />
+    <Folder Include="RecipesCosts\Commands\" />
+    <Folder Include="RecipesCosts\Commons\Mappings\" />
+    <Folder Include="RecipesCosts\Commons\Models\" />
+    <Folder Include="RecipesCosts\Handlers\" />
+    <Folder Include="RecipesCosts\Queries\" />
+    <Folder Include="RecipesIngredients\Commands\" />
+    <Folder Include="RecipesIngredients\Commons\Mappings\" />
+    <Folder Include="RecipesIngredients\Commons\Models\" />
+    <Folder Include="RecipesIngredients\Handlers\" />
+    <Folder Include="RecipesIngredients\Queries\" />
+    <Folder Include="ProductsRecipes\Commons\Models\" />
+    <Folder Include="Suppliers\Commons\Models\" />
+    <Folder Include="StorageBins\Commons\Models\" />
+    <Folder Include="Zones\Commons\Models\" />
+    <Folder Include="SupplierMaterials\Commons\Models\" />
+    <Folder Include="UnitOfMesaure\Commons\Models\" />
+    <Folder Include="Warehouses\Commons\Models\" />
+  </ItemGroup>
+
+</Project>
