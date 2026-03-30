@@ -23,9 +23,9 @@ namespace Inventory.API.Controllers
         }
 
         [HttpGet("zone/{zoneId}")]
-        public async Task<ActionResult<List<StorageBinDto>>> GetByZone(Guid zoneId)
+        public async Task<ActionResult<List<StorageBinDto>>> GetByZone(Guid zoneId, [FromQuery] bool includeItems = false)
         {
-            return await _mediator.Send(new GetBinsByZoneQuery(zoneId));
+            return await _mediator.Send(new GetBinsByZoneQuery(zoneId, includeItems));
         }
 
         [HttpPut("{id}")]

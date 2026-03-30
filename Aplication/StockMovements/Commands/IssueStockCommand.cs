@@ -7,13 +7,9 @@ using System.Text;
 namespace Inventory.Application.StockMovements.Commands
 {
     public record IssueStockCommand(
-         Guid MaterialId,
+        Guid StockItemId,
          decimal Quantity,
-         Guid WarehouseId,
-         Guid StatusId,       // De qué estado lo estamos sacando (ej. "Disponible")
-         Guid? StorageBinId,
-         Guid? LotId,
-
+         
          MovementType Type,   // ¿Es por venta (SalesShipment) o para fabricar (ManufacturingUse)?
 
          // --- Auditoría ---

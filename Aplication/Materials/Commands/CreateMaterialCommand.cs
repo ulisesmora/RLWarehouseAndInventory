@@ -20,6 +20,17 @@ namespace Inventory.Application.Materials.Commands
         decimal? Weight,
         decimal? Volume,
 
+        decimal? LengthCm,
+        decimal? WidthCm,
+        decimal? HeightCm,
+        decimal? WeightKg,
+
+        bool IsFragile,
+        int MaxStackingLayers,
+        decimal? MinTemperatureCelsius,
+        decimal? MaxTemperatureCelsius,
+        List<string>? HazmatTags,
+
         // Numéricos (Pueden ser 0)
         decimal ReorderPoint,
         decimal TargetStock,

@@ -33,6 +33,27 @@ namespace Inventory.Domain
         public Guid UnitOfMeasureId { get; set; }
         public virtual UnitOfMeasure UnitOfMeasure { get; set; }
 
+        public bool? IsFragile { get; set; }
+        public int? MaxStackingLayers { get; set; } = 1; // Por defecto no se apila (1 capa)
+
+        // --- 2. Condiciones Ambientales ---
+        // Usamos nullable (decimal?) porque una llanta o un tornillo no tienen límite de temperatura
+        public decimal? MinTemperatureCelsius { get; set; }
+        public decimal? MaxTemperatureCelsius { get; set; }
+
+        // --- 3. Seguridad y Normativas (TAGS) ---
+        // Guardaremos una lista de etiquetas: ["Flammable", "Corrosive", "Toxic"]
+        public List<string> HazmatTags { get; set; } = new List<string>();
+
+        public decimal? LengthCm { get; set; }
+        public decimal? WidthCm { get; set; }
+        public decimal? HeightCm { get; set; }
+        public decimal? WeightKg { get; set; }
+
+        public decimal? VolumeCm3 => (LengthCm.HasValue && WidthCm.HasValue && HeightCm.HasValue)
+                                     ? (LengthCm * WidthCm * HeightCm)
+                                     : null;
+
         // Colección de proveedores que venden este material
         public virtual ICollection<SupplierMaterial> SupplierMaterials { get; set; }
 

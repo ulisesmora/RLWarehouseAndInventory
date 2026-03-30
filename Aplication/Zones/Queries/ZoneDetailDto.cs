@@ -15,6 +15,15 @@ namespace Inventory.Application.Zones.Queries
         public Guid WarehouseId { get; set; }
         public string WarehouseName { get; set; }
 
+        public bool AllowMixedLots { get; set; }
+
+        // 2. Condiciones Ambientales
+        public decimal? MinTemperatureCelsius { get; set; }
+        public decimal? MaxTemperatureCelsius { get; set; }
+
+        // 3. Seguridad (Tags permitidos)
+        public List<string> AllowedHazmatTags { get; set; } = new List<string>();
+
         // 🔥 La lista de ubicaciones dentro de esta zona
         public List<ZoneBinDto> Bins { get; set; }
     }

@@ -20,74 +20,59 @@ namespace Inventory.Application.StockMovements.Handlers
 
         public async Task Handle(AdjustStockCommand request, CancellationToken cancellationToken)
         {
-            if (request.PhysicalCount < 0) throw new ArgumentException("El conteo físico no puede ser negativo.");
+            if (request.PhysicalCount < 0)
+                throw new ArgumentException("El conteo físico no puede ser negativo.");
 
+            // 1. BUSCAMOS LA CAJA ESPECÍFICA (LPN)
             var stockItem = await _context.StockItems
-                .FirstOrDefaultAsync(s =>
-                    s.MaterialId == request.MaterialId &&
-                    s.WarehouseId == request.WarehouseId &&
-                    s.StorageBinId == request.StorageBinId &&
-                    s.LotId == request.LotId &&
-                    s.StatusId == request.StatusId,
-                    cancellationToken);
+                .FirstOrDefaultAsync(s => s.Id == request.StockItemId, cancellationToken);
 
-            decimal currentSystemCount = stockItem?.QuantityOnHand ?? 0;
+            if (stockItem == null)
+                throw new InvalidOperationException("No se encontró el contenedor/LPN en el sistema para ajustar.");
 
-            // Si el conteo físico es igual al del sistema, no hay nada que ajustar.
+            decimal currentSystemCount = stockItem.QuantityOnHand;
+
+            // Si el conteo físico es exactamente igual, no hay nada que ajustar.
             if (currentSystemCount == request.PhysicalCount) return;
 
-            // Calculamos la diferencia (Positiva = Encontramos más; Negativa = Se perdió mercancía)
+            // 2. REGLA DE NEGOCIO: Proteger inventario comprometido
+            if (request.PhysicalCount < stockItem.QuantityReserved)
+            {
+                throw new InvalidOperationException($"No puedes ajustar esta caja a {request.PhysicalCount} porque ya tiene {stockItem.QuantityReserved} unidades reservadas para un pedido.");
+            }
+
+            // Calculamos la diferencia (Positiva = Sobró mercancía; Negativa = Faltó mercancía)
             decimal difference = request.PhysicalCount - currentSystemCount;
 
-            // Actualizamos o creamos el StockItem
-            if (stockItem != null)
-            {
-                // Validación opcional: No puedes ajustar por debajo de lo que ya tienes reservado.
-                if (request.PhysicalCount < stockItem.QuantityReserved)
-                {
-                    throw new InvalidOperationException($"No puedes ajustar el inventario a {request.PhysicalCount} porque ya tienes {stockItem.QuantityReserved} unidades reservadas para clientes.");
-                }
-                stockItem.QuantityOnHand = request.PhysicalCount;
-            }
-            else
-            {
-                stockItem = new StockItem
-                {
-                    MaterialId = request.MaterialId,
-                    WarehouseId = request.WarehouseId,
-                    StorageBinId = request.StorageBinId,
-                    LotId = request.LotId,
-                    StatusId = request.StatusId,
-                    QuantityOnHand = request.PhysicalCount,
-                    QuantityReserved = 0
-                };
-                _context.StockItems.Add(stockItem);
-            }
+            // 3. ACTUALIZAMOS LA CAJA
+            stockItem.QuantityOnHand = request.PhysicalCount;
 
-            // Si el ajuste lo dejó en cero, limpiamos
+            // 4. GENERAMOS EL HISTORIAL DEL AJUSTE
+            var movement = new StockMovement
+            {
+                StockItemId = stockItem.Id,
+                MaterialId = stockItem.MaterialId,
+                WarehouseId = stockItem.WarehouseId,
+                StorageBinId = stockItem.StorageBinId,
+                LotId = stockItem.LotId,
+
+                Type = MovementType.Adjustment,
+                Quantity = difference, // Guardamos la diferencia exacta del ajuste
+
+                MovementDate = DateTime.UtcNow,
+                ReferenceNumber = stockItem.ReferenceNumber, // Mantenemos la matrícula
+                Comments = $"AJUSTE FÍSICO: {request.Reason}. (Sistema tenía: {currentSystemCount}, Físico: {request.PhysicalCount})",
+                UserId = request.UserId
+            };
+
+            _context.StockMovements.Add(movement);
+
             if (stockItem.QuantityOnHand == 0 && stockItem.QuantityReserved == 0)
             {
                 _context.StockItems.Remove(stockItem);
             }
 
-            // Generamos el historial del ajuste
-            var movement = new StockMovement
-            {
-                MaterialId = request.MaterialId,
-                WarehouseId = request.WarehouseId,
-                StorageBinId = request.StorageBinId,
-                LotId = request.LotId,
-
-                Type = MovementType.Adjustment,
-                Quantity = difference, // Se guardará en negativo si se perdió, en positivo si sobró
-
-                MovementDate = DateTime.UtcNow,
-                ReferenceNumber = "AJUSTE-FÍSICO",
-                Comments = request.Reason,
-                UserId = request.UserId
-            };
-
-            _context.StockMovements.Add(movement);
+            // 6. GUARDAR TRANSACCIÓN (ACID)
             await _context.SaveChangesAsync(cancellationToken);
         }
     }

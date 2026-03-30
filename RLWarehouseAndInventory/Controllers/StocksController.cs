@@ -1,6 +1,8 @@
-﻿using Inventory.Application.StockMovements.Commands;
+﻿using Inventory.Application.Materials.Commons.Models;
+using Inventory.Application.StockMovements.Commands;
 using Inventory.Application.StockMovements.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,22 +24,22 @@ namespace Inventory.API.Controllers
             return await _mediator.Send(new GetStockByMaterialQuery(materialId));
         }
 
-        [HttpGet("kardex/{materialId}")]
-        public async Task<ActionResult<List<StockMovementDto>>> GetKardex(
-        [FromQuery] Guid? materialId,
-        [FromQuery] Guid? warehouseId,
-        [FromQuery] Guid? lotId,
-        [FromQuery] DateTime? startDate,
-        [FromQuery] DateTime? endDate)
+        [HttpGet]
+        public async Task<ActionResult<PaginatedList<StockItemDto>>> GetStockItems([FromQuery] GetStockItemsQuery query)
         {
-            var query = new GetKardexQuery(materialId, warehouseId, lotId, startDate, endDate);
             return await _mediator.Send(query);
+        }
+
+        [HttpGet("{stockItemId}/history")]
+        public async Task<ActionResult<List<StockMovementDto>>> GetStockItemHistory(Guid stockItemId)
+        {
+            return await _mediator.Send(new GetStockItemHistoryQuery(stockItemId));
         }
 
         // --- COMMANDS (Transacciones) ---
 
         [HttpPost("receive")]
-        public async Task<ActionResult<Guid>> Receive(ReceiveStockCommand command)
+        public async Task<ActionResult<bool>> Receive(ReceiveStockCommand command)
         {
             return await _mediator.Send(command);
         }
@@ -60,6 +62,14 @@ namespace Inventory.API.Controllers
         {
             await _mediator.Send(command);
             return NoContent();
+        }
+
+        [HttpPost("bulk-transfer")]
+        public async Task<ActionResult<BulkTransferResult>> BulkTransfer([FromBody] BulkTransferCommand command)
+        {
+            // El handler procesará todo, aplicará el ACID y nos devolverá el reporte
+            var result = await _mediator.Send(command);
+            return Ok(result);
         }
     }
 }

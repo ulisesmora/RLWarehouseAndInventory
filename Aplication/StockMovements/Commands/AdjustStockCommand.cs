@@ -6,14 +6,8 @@ using System.Text;
 namespace Inventory.Application.StockMovements.Commands
 {
     public record AdjustStockCommand(
-        Guid MaterialId,
+        Guid StockItemId,
         decimal PhysicalCount, // Lo que realmente contó el operador
-
-        Guid WarehouseId,
-        Guid? StorageBinId,
-        Guid StatusId,
-        Guid? LotId,
-
         string Reason, // Obligatorio para ajustes (Ej: "Mercancía dañada", "Error de conteo anterior")
         Guid UserId
     ) : IRequest;

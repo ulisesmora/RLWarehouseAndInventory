@@ -11,6 +11,10 @@ namespace Inventory.Application.Zones.Commands
         string? Description,
         double Width,
         double Depth,
-        double Height
+        double Height,
+        bool AllowMixedLots,
+        decimal? MinTemperatureCelsius,
+        decimal? MaxTemperatureCelsius,
+        List<string>? AllowedHazmatTags
     ) : IRequest;
 }

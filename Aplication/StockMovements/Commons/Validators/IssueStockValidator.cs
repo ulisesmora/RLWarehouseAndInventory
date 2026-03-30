@@ -11,10 +11,7 @@ namespace Inventory.Application.StockMovements.Commons.Validators
     {
         public IssueStockValidator()
         {
-            RuleFor(v => v.MaterialId).NotEmpty();
-            RuleFor(v => v.WarehouseId).NotEmpty();
-            RuleFor(v => v.StatusId).NotEmpty();
-            RuleFor(v => v.UserId).NotEmpty();
+           // RuleFor(v => v.UserId).NotEmpty();
 
             // La cantidad a sacar siempre debe venir como número positivo en el request
             RuleFor(v => v.Quantity)

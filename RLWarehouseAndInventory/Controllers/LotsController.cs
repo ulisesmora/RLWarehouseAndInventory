@@ -1,5 +1,7 @@
 ﻿using Inventory.Application.Lots.Commands;
 using Inventory.Application.Lots.Queries;
+using Inventory.Application.Materials.Commons.Models;
+using Inventory.Application.Materials.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -34,6 +36,12 @@ namespace Inventory.API.Controllers
         public async Task<ActionResult<List<LotDto>>> GetExpiring([FromQuery] int days = 30)
         {
             return await _mediator.Send(new GetExpiringLotsQuery(days));
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<PaginatedList<LotDto>>> GetLots([FromQuery] GetLotsQuery query)
+        {
+            return await _mediator.Send(query);
         }
 
         [HttpPut("{id}")]

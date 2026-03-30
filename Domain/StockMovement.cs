@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Inventory.Domain
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum MovementType
     {
         PurchaseReception,  // Entrada por compra
@@ -36,9 +38,11 @@ namespace Inventory.Domain
 
         // --- Auditoría ---
         public string ReferenceNumber { get; set; } // Ej: "PO-2024-001" (Orden de compra)
-        public Guid UserId { get; set; }            // Quién hizo el movimiento
+        public Guid? UserId { get; set; }            // Quién hizo el movimiento
         public string Comments { get; set; }
         public Guid? StorageBinId { get; set; }
         public virtual StorageBin? StorageBin { get; set; }
+        public Guid? StockItemId { get; set; }
+        public virtual StockItem? StockItem { get; set; }
     }
 }

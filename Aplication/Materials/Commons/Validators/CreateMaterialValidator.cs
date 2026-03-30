@@ -41,8 +41,28 @@ namespace Inventory.Application.Materials.Commons.Validators
 				RuleFor(x => x.BarCode).MaximumLength(100);
 			});
 
-			// 2. Si es PRODUCTO TERMINADO, exigimos Precio de Venta
-			When(x => x.Type == MaterialType.FinishedGood, () =>
+            // 3. Apilamiento: No puedes tener 0 capas. Si existe, mínimo ocupa 1 capa (el piso).
+            RuleFor(v => v.MaxStackingLayers)
+                .GreaterThanOrEqualTo(1).WithMessage("El máximo de capas de apilamiento debe ser al menos 1.");
+
+            // 4. Paradoja Térmica: La máxima no puede ser menor a la mínima
+            When(x => x.MinTemperatureCelsius.HasValue && x.MaxTemperatureCelsius.HasValue, () =>
+            {
+                RuleFor(x => x.MaxTemperatureCelsius)
+                    .GreaterThanOrEqualTo(x => x.MinTemperatureCelsius)
+                    .WithMessage("La temperatura máxima no puede ser menor a la temperatura mínima.");
+            });
+
+            // 5. Integridad de los Tags (Hazmat)
+            When(x => x.HazmatTags != null && x.HazmatTags.Any(), () =>
+            {
+                RuleForEach(x => x.HazmatTags)
+                    .NotEmpty().WithMessage("Las etiquetas de seguridad no pueden contener valores vacíos.")
+                    .MaximumLength(50).WithMessage("Cada etiqueta de seguridad no debe exceder los 50 caracteres.");
+            });
+
+            // 2. Si es PRODUCTO TERMINADO, exigimos Precio de Venta
+            When(x => x.Type == MaterialType.FinishedGood, () =>
 			{
 				RuleFor(x => x.SalesPrice)
 					.NotNull().WithMessage("El precio de venta es obligatorio para productos terminados.")

@@ -10,6 +10,11 @@ namespace Inventory.Application.StorageBins.Commands
          string RackPrefix, // Ej: "RACK-8F2A1"
          double PhysicalOffsetX,
          double PhysicalOffsetZ,
-         int Rotation 
+         int Rotation,
+         double Width,
+         double Height,
+         double Depth,
+         decimal MaxWeight,
+         decimal MaxVolume
     ) : IRequest<bool>;
 }

@@ -6,6 +6,7 @@ using System.Text;
 namespace Inventory.Application.StockMovements.Commands
 {
     public record TransferStockCommand(
+        Guid StockItemId,
          Guid MaterialId,
          decimal Quantity,
 

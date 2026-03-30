@@ -16,6 +16,13 @@ namespace Inventory.Domain
         public double Depth { get; set; }  // Profundidad
         public double Height { get; set; } // Altura
 
+        public bool? AllowMixedLots { get; set; } = false;
+
+        // --- 2. Condiciones Ambientales de la Zona ---
+        public decimal? MinTemperatureCelsius { get; set; }
+        public decimal? MaxTemperatureCelsius { get; set; }
+        public List<string> AllowedHazmatTags { get; set; } = new List<string>();
+
         // Relación: Pertenece a un Warehouse
         public Guid WarehouseId { get; set; }
         public virtual Warehouse? Warehouse { get; set; }

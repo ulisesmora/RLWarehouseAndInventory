@@ -5,5 +5,5 @@ using System.Text;
 
 namespace Inventory.Application.StorageBins.Queries
 {
-    public record GetBinsByZoneQuery(Guid ZoneId) : IRequest<List<StorageBinDto>>;
+    public record GetBinsByZoneQuery(Guid ZoneId, bool? IncludeItems) : IRequest<List<StorageBinDto>>;
 }

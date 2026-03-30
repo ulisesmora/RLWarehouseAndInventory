@@ -1,6 +1,7 @@
 ﻿using Domain;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace Inventory.Domain
@@ -34,6 +35,9 @@ namespace Inventory.Domain
         // Relación: Atajo al Warehouse (Útil para queries rápidos)
         public Guid WarehouseId { get; set; }
         public virtual Warehouse? Warehouse { get; set; }
+
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
 
         // Relación: ¿Qué stock hay aquí?
         public virtual ICollection<StockItem> StockItems { get; set; } = new List<StockItem>();

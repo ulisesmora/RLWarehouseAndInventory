@@ -146,11 +146,33 @@ namespace Inventory.Persistence.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<string>("HazmatTags")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("HeightCm")
+                        .HasColumnType("numeric");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("IsFragile")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsStockable")
                         .HasColumnType("boolean");
+
+                    b.Property<decimal?>("LengthCm")
+                        .HasColumnType("numeric");
+
+                    b.Property<int?>("MaxStackingLayers")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("MaxTemperatureCelsius")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("MinTemperatureCelsius")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -195,6 +217,12 @@ namespace Inventory.Persistence.Migrations
                     b.Property<decimal?>("Weight")
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)");
+
+                    b.Property<decimal?>("WeightKg")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("WidthCm")
+                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
 
@@ -387,6 +415,12 @@ namespace Inventory.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Comments")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ContainerType")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -396,8 +430,17 @@ namespace Inventory.Persistence.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal?>("HeightCm")
+                        .HasColumnType("numeric");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("IsStackable")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("LengthCm")
+                        .HasColumnType("numeric");
 
                     b.Property<Guid?>("LotId")
                         .HasColumnType("uuid");
@@ -412,6 +455,10 @@ namespace Inventory.Persistence.Migrations
                     b.Property<decimal>("QuantityReserved")
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)");
+
+                    b.Property<string>("ReferenceNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("StatusId")
                         .HasColumnType("uuid");
@@ -428,18 +475,26 @@ namespace Inventory.Persistence.Migrations
                     b.Property<Guid>("WarehouseId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("WeightKg")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("WidthCm")
+                        .HasColumnType("numeric");
+
                     b.HasKey("Id");
 
                     b.HasIndex("LotId");
 
                     b.HasIndex("MaterialId");
 
+                    b.HasIndex("ReferenceNumber")
+                        .IsUnique();
+
                     b.HasIndex("StatusId");
 
                     b.HasIndex("StorageBinId");
 
-                    b.HasIndex("WarehouseId", "MaterialId", "LotId", "StatusId")
-                        .IsUnique();
+                    b.HasIndex("WarehouseId", "MaterialId", "LotId", "StatusId");
 
                     b.ToTable("StockItems");
                 });
@@ -482,6 +537,9 @@ namespace Inventory.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("StockItemId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("StorageBinId")
                         .HasColumnType("uuid");
 
@@ -494,7 +552,7 @@ namespace Inventory.Persistence.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("WarehouseId")
@@ -505,6 +563,8 @@ namespace Inventory.Persistence.Migrations
                     b.HasIndex("LotId");
 
                     b.HasIndex("MaterialId");
+
+                    b.HasIndex("StockItemId");
 
                     b.HasIndex("StorageBinId");
 
@@ -559,6 +619,12 @@ namespace Inventory.Persistence.Migrations
                     b.Property<double>("PositionZ")
                         .HasColumnType("double precision");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -599,7 +665,6 @@ namespace Inventory.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("ContactEmail")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ContactName")
@@ -607,7 +672,6 @@ namespace Inventory.Persistence.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ContactPhone")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
@@ -617,7 +681,6 @@ namespace Inventory.Persistence.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Currency")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("DeletedAt")
@@ -633,11 +696,10 @@ namespace Inventory.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("PaymentTermsDays")
+                    b.Property<int?>("PaymentTermsDays")
                         .HasColumnType("integer");
 
                     b.Property<string>("TaxId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -647,7 +709,6 @@ namespace Inventory.Persistence.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Website")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -874,6 +935,13 @@ namespace Inventory.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool?>("AllowMixedLots")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("AllowedHazmatTags")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -894,6 +962,12 @@ namespace Inventory.Persistence.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<decimal?>("MaxTemperatureCelsius")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("MinTemperatureCelsius")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -1055,6 +1129,10 @@ namespace Inventory.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Inventory.Domain.StockItem", "StockItem")
+                        .WithMany()
+                        .HasForeignKey("StockItemId");
+
                     b.HasOne("Inventory.Domain.StorageBin", "StorageBin")
                         .WithMany()
                         .HasForeignKey("StorageBinId");
@@ -1068,6 +1146,8 @@ namespace Inventory.Persistence.Migrations
                     b.Navigation("Lot");
 
                     b.Navigation("Material");
+
+                    b.Navigation("StockItem");
 
                     b.Navigation("StorageBin");
 

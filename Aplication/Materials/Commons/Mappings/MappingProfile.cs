@@ -15,7 +15,8 @@ namespace Inventory.Application.Materials.Commons.Mappings
             // Mapeo simple: Coincide nombres de propiedades automáticamente
             CreateMap<CreateMaterialCommand, Material>()
                 // Si necesitas valores por defecto que no vienen en el comando:
-                .ForMember(dest => dest.IsStockable, opt => opt.MapFrom(src => true));
+                .ForMember(dest => dest.IsStockable, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.HazmatTags, opt => opt.MapFrom(src => src.HazmatTags ?? new List<string>())); ;
 
             // En MappingProfile.cs
             CreateMap<UpdateMaterialCommand, Material>()

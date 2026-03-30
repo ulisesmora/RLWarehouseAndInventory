@@ -17,7 +17,11 @@ namespace Inventory.Application.Zones.Commons.Mappings
     .ForMember(d => d.Bins, opt => opt.MapFrom(s => s.Bins)); // Mapea la colección
 
             // Para la sub-lista de Bins
-            CreateMap<CreateZoneCommand, Zone>();
+            CreateMap<CreateZoneCommand, Zone>().ForMember(dest => dest.AllowedHazmatTags, opt =>
+            {
+                opt.PreCondition(src => src.AllowedHazmatTags != null);
+                opt.MapFrom(src => src.AllowedHazmatTags);
+            });
             CreateMap<StorageBin, ZoneBinDto>();
 
             // Para Update (Command -> Entity)

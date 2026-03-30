@@ -33,6 +33,11 @@ namespace Inventory.Application.StorageBins.Handlers
                 bin.physicalOffsetX = request.PhysicalOffsetX;
                 bin.physicalOffsetZ = request.PhysicalOffsetZ;
                 bin.rotation = request.Rotation;
+                bin.Width = request.Width;
+                bin.Height = request.Height;
+                bin.Depth = request.Depth;
+                bin.MaxWeight = request.MaxWeight;
+                bin.MaxVolume = request.MaxVolume;
             }
 
             // 3. Guardamos los cambios en la BD de un solo golpe

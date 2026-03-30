@@ -32,12 +32,34 @@ namespace Inventory.Persistence
         public DbSet<Zone> Zones => Set<Zone>();
         public DbSet<StorageBin> StorageBins => Set<StorageBin>();
         public DbSet<WorkOrder> WorkOrder => Set<WorkOrder>();
+        public DbSet<Organization> Organization => Set<Organization>();
+        public DbSet<User> User => Set<User>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // 1. Aplicar todas las configuraciones IEntityTypeConfiguration que creamos arriba
             // (Escanea el ensamblado actual y las carga solas)
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+            modelBuilder.Entity<Material>()
+          .Property(m => m.HazmatTags)
+          .HasConversion(
+              v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions)null),
+              // Si la base de datos manda un texto vacío, devolvemos una lista vacía en lugar de quebrar
+              v => string.IsNullOrWhiteSpace(v)
+                   ? new List<string>()
+                   : System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions)null)
+          );
+
+            modelBuilder.Entity<Zone>()
+                .Property(z => z.AllowedHazmatTags)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions)null),
+                    // Lo mismo aquí
+                    v => string.IsNullOrWhiteSpace(v)
+                         ? new List<string>()
+                         : System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions)null)
+                );
 
             // 2. Configuración Global para Soft Delete (Query Filter)
             // Esto hace que EF Core ignore automáticamente cualquier registro con IsDeleted = true

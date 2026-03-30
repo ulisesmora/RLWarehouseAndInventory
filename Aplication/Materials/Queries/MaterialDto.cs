@@ -33,8 +33,24 @@ namespace Inventory.Application.Materials.Queries
 		public string CategoryName { get; set; } = string.Empty;
 		public string CategoryDescription { get; set; } = string.Empty; // Útil a veces
 
-		// --- Campo Calculado (Stock Total) ---
-		// Este no viene de la tabla Material, lo calcularemos en el Query
-		public decimal TotalStock { get; set; }
+        public bool IsFragile { get; set; }
+        public int MaxStackingLayers { get; set; }
+
+        // --- 📏 Logística y Geometría Física ---
+        public decimal? LengthCm { get; set; }
+        public decimal? WidthCm { get; set; }
+        public decimal? HeightCm { get; set; }
+        public decimal? WeightKg { get; set; }
+        public decimal? VolumeCm3 { get; set; } // ¡AutoMapper lo llenará mágicamente!
+
+
+
+        public decimal? MinTemperatureCelsius { get; set; }
+        public decimal? MaxTemperatureCelsius { get; set; }
+        public List<string> HazmatTags { get; set; } = new List<string>(); // Etiquetas de peligro
+
+        // --- Campo Calculado (Stock Total) ---
+        // Este no viene de la tabla Material, lo calcularemos en el Query
+        public decimal TotalStock { get; set; }
 	}
 }
