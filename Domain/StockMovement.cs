@@ -17,7 +17,7 @@ namespace Inventory.Domain
         Transfer            // Movimiento entre bodegas
     }
 
-    public class StockMovement : BaseEntity
+    public class StockMovement : BaseTenantEntity
     {
         public DateTime MovementDate { get; set; }
         public MovementType Type { get; set; }

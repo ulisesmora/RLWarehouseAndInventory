@@ -2,6 +2,7 @@
 using Inventory.Application.UnitOfMesaure.Commands;
 using Inventory.Application.UnitOfMesaure.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +10,7 @@ namespace Inventory.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UnitOfMeasuresController : ControllerBase
     {
         private readonly IMediator _mediator;

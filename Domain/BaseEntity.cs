@@ -12,4 +12,14 @@
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
     }
+
+    public interface ITenantEntity
+    {
+        Guid OrganizationId { get; set; }
+    }
+
+    public abstract class BaseTenantEntity : BaseEntity, ITenantEntity
+    {
+        public Guid OrganizationId { get; set; }
+    }
 }

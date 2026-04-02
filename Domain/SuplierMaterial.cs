@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public class SupplierMaterial : BaseEntity
+    public class SupplierMaterial : BaseTenantEntity
     {
         public Guid SupplierId { get; set; }
         public virtual Supplier Supplier { get; set; }

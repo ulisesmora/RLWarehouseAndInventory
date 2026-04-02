@@ -1,6 +1,7 @@
 ﻿using Inventory.Application.SupplierMaterials.Commands;
 using Inventory.Application.SupplierMaterials.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,7 @@ namespace Inventory.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class SupplierMaterialsController : ControllerBase
     {
         private readonly IMediator _mediator;

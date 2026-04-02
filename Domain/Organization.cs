@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Domain;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Inventory.Domain
 {
-    public class Organization
+    public class Organization : BaseEntity
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = string.Empty; // Ej. "Empaques Nacionales S.A."

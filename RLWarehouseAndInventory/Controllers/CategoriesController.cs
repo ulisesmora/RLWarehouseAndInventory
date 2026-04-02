@@ -1,7 +1,8 @@
-﻿using Inventory.Application.Materials.Commons.Models;
-using Inventory.Application.Categories.Commands;
+﻿using Inventory.Application.Categories.Commands;
 using Inventory.Application.Categories.Queries;
+using Inventory.Application.Materials.Commons.Models;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +10,7 @@ namespace Inventory.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CategoriesController : ControllerBase
     {
         private readonly IMediator _mediator;

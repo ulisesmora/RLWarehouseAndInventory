@@ -14,7 +14,7 @@ namespace Inventory.Persistence.EntityConfigurations
             builder.HasKey(x => x.Id);
 
             // Regla de Oro: El SKU debe ser ÚNICO en toda la base de datos
-            builder.HasIndex(x => x.SKU).IsUnique();
+            builder.HasIndex(x => new { x.SKU, x.OrganizationId }).IsUnique();
 
             // Configuración de decimales (Postgres necesita saber la precisión)
             // (18, 2) para dinero, (18, 4) para medidas físicas (ej: 0.0001 gramos)

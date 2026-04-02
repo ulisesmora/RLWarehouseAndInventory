@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public class ProductRecipe : BaseEntity
+    public class ProductRecipe : BaseTenantEntity
     {
         public string Name { get; set; } = string.Empty; // Ej: "Receta Camisa Verano Talla M"
         public string? Instructions { get; set; } // Instrucciones de corte/costura

@@ -19,8 +19,8 @@ namespace Inventory.Persistence.EntityConfigurations
             // Evita duplicados: Solo una fila por Almacén + Material + Lote + Estado
             
             builder.HasIndex(x => new { x.WarehouseId, x.MaterialId, x.LotId, x.StatusId });
-            builder.HasIndex(x => x.ReferenceNumber)
-           .IsUnique();
+            builder.HasIndex(x => new { x.ReferenceNumber, x.OrganizationId }).IsUnique();
+            
         }
     }
 }

@@ -4,14 +4,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text; 
 namespace Inventory.Persistence
 {
     public class InventoryDbContext : DbContext
     {
-        public InventoryDbContext(DbContextOptions<InventoryDbContext> options) : base(options)
+        private readonly ICurrentUserService? _currentUserService;
+        public InventoryDbContext(DbContextOptions<InventoryDbContext> options, ICurrentUserService currentUserService) : base(options)
         {
+            _currentUserService = currentUserService;
         }
 
         public DbSet<Material> Materials => Set<Material>();
@@ -34,6 +37,8 @@ namespace Inventory.Persistence
         public DbSet<WorkOrder> WorkOrder => Set<WorkOrder>();
         public DbSet<Organization> Organization => Set<Organization>();
         public DbSet<User> User => Set<User>();
+
+        public Guid? CurrentTenantId => _currentUserService?.GetTenantId();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -65,10 +70,35 @@ namespace Inventory.Persistence
             // Esto hace que EF Core ignore automáticamente cualquier registro con IsDeleted = true
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
-                if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+                var clrType = entityType.ClrType;
+                bool isBaseEntity = typeof(BaseEntity).IsAssignableFrom(clrType);
+                bool isTenantEntity = typeof(ITenantEntity).IsAssignableFrom(clrType);
+
+                if (isBaseEntity || isTenantEntity)
                 {
-                    // Usamos un método genérico para aplicar el filtro
-                    modelBuilder.Entity(entityType.ClrType).HasQueryFilter(ConvertFilterExpression<BaseEntity>(e => !e.IsDeleted, entityType.ClrType));
+                    var parameter = Expression.Parameter(clrType, "e");
+                    Expression? filterExpression = null;
+
+                    if (isBaseEntity)
+                    {
+                        var isDeletedProperty = Expression.Property(parameter, nameof(BaseEntity.IsDeleted));
+                        filterExpression = Expression.Equal(isDeletedProperty, Expression.Constant(false));
+                    }
+
+                    if (isTenantEntity)
+                    {
+                        var tenantIdProperty = Expression.Property(parameter, nameof(ITenantEntity.OrganizationId));
+                        var currentTenantIdProp = Expression.Property(Expression.Constant(this), nameof(CurrentTenantId));
+                        var tenantFilter = Expression.Equal(tenantIdProperty, Expression.Convert(currentTenantIdProp, typeof(Guid)));
+
+                        filterExpression = filterExpression == null ? tenantFilter : Expression.AndAlso(filterExpression, tenantFilter);
+                    }
+
+                    if (filterExpression != null)
+                    {
+                        var lambda = Expression.Lambda(filterExpression, parameter);
+                        modelBuilder.Entity(clrType).HasQueryFilter(lambda);
+                    }
                 }
             }
 
@@ -88,6 +118,9 @@ namespace Inventory.Persistence
         // Sobreescribir SaveChanges para llenar CreatedAt y UpdatedAt automáticamente
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
+            var tenantId = _currentUserService?.GetTenantId();
+            var userId = _currentUserService?.GetUserId();
+
             foreach (var entry in ChangeTracker.Entries<BaseEntity>())
             {
                 switch (entry.State)
@@ -105,6 +138,17 @@ namespace Inventory.Persistence
                         entry.Entity.IsDeleted = true;
                         entry.Entity.DeletedAt = DateTime.UtcNow;
                         break;
+                }
+            }
+
+            if (tenantId.HasValue)
+            {
+                foreach (var entry in ChangeTracker.Entries<ITenantEntity>())
+                {
+                    if (entry.State == EntityState.Added)
+                    {
+                        entry.Entity.OrganizationId = tenantId.Value;
+                    }
                 }
             }
             return base.SaveChangesAsync(cancellationToken);

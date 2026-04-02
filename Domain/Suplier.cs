@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public class Supplier : BaseEntity
+    public class Supplier : BaseTenantEntity
     {
         public string Name { get; set; }
         public string? TaxId { get; set; }          // RFC, CIF, VAT

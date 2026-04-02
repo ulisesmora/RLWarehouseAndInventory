@@ -10,7 +10,13 @@ namespace Inventory.Domain
         Supervisor,  // Ve métricas, hace ajustes, pero no configura el sistema
         Operator     // Solo App Móvil (Recibir, Acomodar, Extraer)
     }
-    public class User
+
+    public interface ICurrentUserService
+    {
+        Guid? GetTenantId();
+        Guid? GetUserId();
+    }
+    public class User 
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 

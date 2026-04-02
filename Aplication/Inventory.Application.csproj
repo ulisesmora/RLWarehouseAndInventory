@@ -8,10 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="iTextSharp.LGPLv2.Core" Version="3.7.12" />
     <PackageReference Include="MediatR" Version="14.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,6 +39,7 @@
     <Folder Include="ProductsRecipes\Commons\Models\" />
     <Folder Include="Suppliers\Commons\Models\" />
     <Folder Include="StorageBins\Commons\Models\" />
+    <Folder Include="Tenant\Users\" />
     <Folder Include="Zones\Commons\Models\" />
     <Folder Include="SupplierMaterials\Commons\Models\" />
     <Folder Include="UnitOfMesaure\Commons\Models\" />

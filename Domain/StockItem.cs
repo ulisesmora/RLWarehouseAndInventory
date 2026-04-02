@@ -18,7 +18,7 @@ namespace Inventory.Domain
         Bag,        // Saco / Costal (Ej: Cemento, Azúcar)
         Other       // Geometría irregular
     }
-    public class StockItem : BaseEntity
+    public class StockItem : BaseTenantEntity
     {
         public Guid WarehouseId { get; set; }
         public virtual Warehouse Warehouse { get; set; }

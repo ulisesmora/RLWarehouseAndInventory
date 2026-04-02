@@ -13,7 +13,7 @@ namespace Inventory.Domain
         Completed,      // Terminado (Consume materiales, ingresa producto terminado)
         Cancelled       // Cancelado (Libera las reservas de material)
     }
-    public class WorkOrder : BaseEntity
+    public class WorkOrder : BaseTenantEntity
     {
         // Ej: "WO-2026-0001" (Para que el operario la busque fácilmente)
         public string OrderNumber { get; set; } = string.Empty;

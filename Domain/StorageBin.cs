@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public class StorageBin : BaseEntity
+    public class StorageBin : BaseTenantEntity
     {
         public string Code { get; set; } = string.Empty; // Ej: "A-01-01" (Pasillo-Rack-Nivel)
         public string? Description { get; set; }

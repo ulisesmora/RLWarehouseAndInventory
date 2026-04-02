@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public class UnitOfMeasure : BaseEntity
+    public class UnitOfMeasure : BaseTenantEntity
     {
         public string Name { get; set; }        // Ej: "Kilogramo", "Metro", "Unidad"
         public string Abbreviation { get; set; } // Ej: "kg", "m", "u"

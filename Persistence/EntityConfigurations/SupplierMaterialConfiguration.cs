@@ -15,7 +15,7 @@ namespace Inventory.Persistence.EntityConfigurations
             builder.Property(x => x.MinimumOrderQuantity).HasPrecision(18, 4);
 
             // Un proveedor solo puede estar listado una vez para un material específico
-            builder.HasIndex(x => new { x.SupplierId, x.MaterialId }).IsUnique();
+            builder.HasIndex(x => new { x.SupplierId, x.MaterialId, x.OrganizationId }).IsUnique();
         }
     }
 }

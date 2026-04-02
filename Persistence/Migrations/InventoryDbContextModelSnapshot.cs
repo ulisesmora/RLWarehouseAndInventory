@@ -48,6 +48,9 @@ namespace Inventory.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("ParentCategoryId")
                         .HasColumnType("uuid");
 
@@ -99,6 +102,9 @@ namespace Inventory.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("MaterialId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("SupplierId")
@@ -178,6 +184,9 @@ namespace Inventory.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("ReorderPoint")
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)");
@@ -228,12 +237,58 @@ namespace Inventory.Persistence.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("SKU")
-                        .IsUnique();
-
                     b.HasIndex("UnitOfMeasureId");
 
+                    b.HasIndex("SKU", "OrganizationId")
+                        .IsUnique();
+
                     b.ToTable("Materials");
+                });
+
+            modelBuilder.Entity("Inventory.Domain.Organization", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MaxAllowedLpns")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SubscriptionTier")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TaxId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Organization");
                 });
 
             modelBuilder.Entity("Inventory.Domain.ProductRecipe", b =>
@@ -269,6 +324,9 @@ namespace Inventory.Persistence.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -311,6 +369,9 @@ namespace Inventory.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("ProductRecipeId")
                         .HasColumnType("uuid");
 
@@ -346,6 +407,9 @@ namespace Inventory.Persistence.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<Guid>("MaterialId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ProductRecipeId")
@@ -398,6 +462,9 @@ namespace Inventory.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -448,6 +515,9 @@ namespace Inventory.Persistence.Migrations
                     b.Property<Guid>("MaterialId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("QuantityOnHand")
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)");
@@ -487,12 +557,12 @@ namespace Inventory.Persistence.Migrations
 
                     b.HasIndex("MaterialId");
 
-                    b.HasIndex("ReferenceNumber")
-                        .IsUnique();
-
                     b.HasIndex("StatusId");
 
                     b.HasIndex("StorageBinId");
+
+                    b.HasIndex("ReferenceNumber", "OrganizationId")
+                        .IsUnique();
 
                     b.HasIndex("WarehouseId", "MaterialId", "LotId", "StatusId");
 
@@ -529,6 +599,9 @@ namespace Inventory.Persistence.Migrations
 
                     b.Property<DateTime>("MovementDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
 
                     b.Property<decimal>("Quantity")
                         .HasColumnType("numeric");
@@ -609,6 +682,9 @@ namespace Inventory.Persistence.Migrations
 
                     b.Property<decimal>("MaxWeight")
                         .HasColumnType("numeric");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
 
                     b.Property<double>("PositionX")
                         .HasColumnType("double precision");
@@ -696,6 +772,9 @@ namespace Inventory.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
                     b.Property<int?>("PaymentTermsDays")
                         .HasColumnType("integer");
 
@@ -751,6 +830,9 @@ namespace Inventory.Persistence.Migrations
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)");
 
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("SupplierId")
                         .HasColumnType("uuid");
 
@@ -776,7 +858,7 @@ namespace Inventory.Persistence.Migrations
 
                     b.HasIndex("MaterialId");
 
-                    b.HasIndex("SupplierId", "MaterialId")
+                    b.HasIndex("SupplierId", "MaterialId", "OrganizationId")
                         .IsUnique();
 
                     b.ToTable("SupplierMaterials");
@@ -814,6 +896,9 @@ namespace Inventory.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -823,6 +908,46 @@ namespace Inventory.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UnitOfMeasures");
+                });
+
+            modelBuilder.Entity("Inventory.Domain.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("RestrictedWarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("Inventory.Domain.Warehouse", b =>
@@ -856,6 +981,9 @@ namespace Inventory.Persistence.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -898,6 +1026,9 @@ namespace Inventory.Persistence.Migrations
                     b.Property<string>("OrderNumber")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
 
                     b.Property<decimal>("PlannedQuantity")
                         .HasColumnType("numeric");
@@ -972,6 +1103,9 @@ namespace Inventory.Persistence.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1192,6 +1326,17 @@ namespace Inventory.Persistence.Migrations
                     b.Navigation("Supplier");
                 });
 
+            modelBuilder.Entity("Inventory.Domain.User", b =>
+                {
+                    b.HasOne("Inventory.Domain.Organization", "Organization")
+                        .WithMany("Users")
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
             modelBuilder.Entity("Inventory.Domain.WorkOrder", b =>
                 {
                     b.HasOne("Inventory.Domain.Material", "FinishedGood")
@@ -1241,6 +1386,11 @@ namespace Inventory.Persistence.Migrations
                     b.Navigation("StockItems");
 
                     b.Navigation("SupplierMaterials");
+                });
+
+            modelBuilder.Entity("Inventory.Domain.Organization", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("Inventory.Domain.ProductRecipe", b =>

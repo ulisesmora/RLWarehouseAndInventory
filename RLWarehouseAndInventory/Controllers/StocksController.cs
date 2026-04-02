@@ -2,6 +2,7 @@
 using Inventory.Application.StockMovements.Commands;
 using Inventory.Application.StockMovements.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ namespace Inventory.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class StocksController : ControllerBase
     {
         private readonly IMediator _mediator;

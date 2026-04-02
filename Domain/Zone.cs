@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public class Zone : BaseEntity
+    public class Zone : BaseTenantEntity
     {
         public string Name { get; set; } = string.Empty; // Ej: "Recepción", "Pasillo A", "Cuarto Frío"
         public string? Description { get; set; }

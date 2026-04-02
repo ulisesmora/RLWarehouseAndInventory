@@ -3,6 +3,7 @@ using Inventory.Application.Lots.Queries;
 using Inventory.Application.Materials.Commons.Models;
 using Inventory.Application.Materials.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,6 +11,7 @@ namespace Inventory.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class LotsController : ControllerBase
     {
         private readonly IMediator _mediator;

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public class RecipeCost : BaseEntity
+    public class RecipeCost : BaseTenantEntity
     {
         public Guid ProductRecipeId { get; set; }
         public ProductRecipe? ProductRecipe { get; set; }

@@ -1,6 +1,7 @@
 ﻿using Inventory.Application.StatusCatalogs.Commands;
 using Inventory.Application.StatusCatalogs.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,7 @@ namespace Inventory.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class StatusCatalog : ControllerBase
     {
         private readonly IMediator _mediator;

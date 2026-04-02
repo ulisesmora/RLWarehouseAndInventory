@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public class Warehouse : BaseEntity
+    public class Warehouse : BaseTenantEntity
     {
         public string Name { get; set; }
         public string Location { get; set; }

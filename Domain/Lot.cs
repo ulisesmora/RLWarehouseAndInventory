@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public class Lot : BaseEntity
+    public class Lot : BaseTenantEntity
     {
         public string LotNumber { get; set; }        // Generado por tu sistema
         public string? VendorBatchNumber { get; set; } // El que viene impreso en la caja

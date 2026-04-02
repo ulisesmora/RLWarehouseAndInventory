@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public class Material : BaseEntity
+    public class Material : BaseTenantEntity
     {
         public string Name { get; set; }
         public string SKU { get; set; }            // Tu código interno
