@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -16,7 +17,7 @@ namespace Inventory.Domain
         Guid? GetTenantId();
         Guid? GetUserId();
     }
-    public class User 
+    public class User : BaseTenantEntity
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
