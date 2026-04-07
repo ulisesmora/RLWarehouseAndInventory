@@ -24,7 +24,7 @@ namespace Inventory.Application.Auth.Handlers
         public async Task<AuthResponses> Handle(RegisterOrganizationCommand request, CancellationToken cancellationToken)
         {
             // 1. Validar si el correo ya existe globalmente
-            if (await _context.User.AnyAsync(u => u.Email == request.Email, cancellationToken))
+            if (await _context.User.IgnoreQueryFilters().AnyAsync(u => u.Email == request.Email, cancellationToken))
             {
                 throw new Exception("El correo ya está registrado."); // Aquí podrías usar una Custom Exception
             }

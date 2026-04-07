@@ -23,7 +23,7 @@ namespace Inventory.Application.Auth.Handlers
 
         public async Task<AuthResponses> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
-            var user = await _context.User.FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+            var user = await _context.User.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
