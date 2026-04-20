@@ -39,6 +39,19 @@ namespace Inventory.Application.Integrations.Services
             }
             return null;
         }
+
+        /// <summary>
+        /// Busca el último estado activo para una organización (sin consumirlo).
+        /// Útil para recuperar el storeUrl en el callback de WooCommerce.
+        /// </summary>
+        public OAuthStateEntry? GetByOrgId(Guid orgId)
+        {
+            var now = DateTime.UtcNow;
+            foreach (var entry in _states.Values)
+                if (entry.OrganizationId == orgId && entry.ExpiresAt >= now)
+                    return entry;
+            return null;
+        }
     }
 
     public class OAuthStateEntry

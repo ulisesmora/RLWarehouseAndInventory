@@ -7,6 +7,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -24,6 +25,7 @@ namespace Inventory.API.Controllers
         private readonly OAuthStateService      _oauthState;
         private readonly ICurrentUserService    _currentUser;
         private readonly IConfiguration         _cfg;
+        private readonly ILogger<IntegrationsController> _logger;
 
         public IntegrationsController(
             IMediator mediator,
@@ -32,7 +34,8 @@ namespace Inventory.API.Controllers
             MercadoLibreOAuthService mlOAuth,
             OAuthStateService        oauthState,
             ICurrentUserService      currentUser,
-            IConfiguration           cfg)
+            IConfiguration           cfg,
+            ILogger<IntegrationsController> logger)
         {
             _mediator     = mediator;
             _shopifyOAuth  = shopifyOAuth;
@@ -41,6 +44,7 @@ namespace Inventory.API.Controllers
             _oauthState    = oauthState;
             _currentUser   = currentUser;
             _cfg           = cfg;
+            _logger        = logger;
         }
 
         // ══════════════════════════════════════════════════════════════════════
@@ -115,12 +119,12 @@ namespace Inventory.API.Controllers
 
                 await _shopifyOAuth.RegisterWebhooksAsync(shop, accessToken, backendBase);
 
-                Console.WriteLine($"[OAUTH SHOPIFY] ✓ Conectado: {shop}");
+                _logger.LogInformation("[OAUTH SHOPIFY] ✓ Conectado: {Shop}", shop);
                 return Redirect($"{frontendBase}/integrations?connected=shopify");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[OAUTH SHOPIFY] Error: {ex.Message}");
+                _logger.LogError(ex, "[OAUTH SHOPIFY] Error al conectar tienda {Shop}", shop);
                 return Redirect($"{frontendBase}/integrations?error=shopify_failed");
             }
         }
@@ -160,33 +164,53 @@ namespace Inventory.API.Controllers
 
         /// <summary>
         /// WooCommerce llama a este endpoint (POST) con el Consumer Key/Secret generado.
+        /// WC Auth v1 envía application/x-www-form-urlencoded — se usa [FromForm].
         /// </summary>
         [HttpPost("woocommerce/oauth/callback")]
         [AllowAnonymous]
-        public async Task<IActionResult> WooCommerceOAuthCallback([FromBody] WooCommerceCallbackPayload payload)
+        public async Task<IActionResult> WooCommerceOAuthCallback([FromForm] WooCommerceCallbackPayload payload)
         {
-            Console.WriteLine($"[OAUTH WC] callback user_id={payload.user_id} permissions={payload.key_permissions}");
+            _logger.LogInformation("[OAUTH WC] Callback recibido — user_id={UserId} key_id={KeyId} permissions={Perms}",
+                payload?.user_id, payload?.key_id, payload?.key_permissions);
 
+            if (payload == null)
+            {
+                _logger.LogWarning("[OAUTH WC] Payload nulo — posiblemente el Content-Type no es form-encoded.");
+                return BadRequest("Payload vacío.");
+            }
+
+            if (string.IsNullOrWhiteSpace(payload.consumer_key) || string.IsNullOrWhiteSpace(payload.consumer_secret))
+            {
+                _logger.LogWarning("[OAUTH WC] consumer_key o consumer_secret vacíos.");
+                return BadRequest("Credenciales vacías.");
+            }
+
+            // user_id puede venir con o sin guiones (formato N o D)
             if (!Guid.TryParse(payload.user_id, out var orgId))
             {
-                Console.WriteLine("[OAUTH WC] user_id inválido.");
-                return BadRequest("user_id inválido.");
+                _logger.LogWarning("[OAUTH WC] user_id no es un GUID válido: {UserId}", payload.user_id);
+                // No rechazamos — seguimos con Guid.Empty para no romper el flujo
+                orgId = Guid.Empty;
             }
+
+            // Intentar recuperar el storeUrl del state guardado al iniciar el flujo
+            var storeEntry = _oauthState.GetByOrgId(orgId);
+            var storeUrl   = storeEntry?.ShopDomain ?? string.Empty;
 
             try
             {
                 await _mediator.Send(new ConnectChannelCommand(
                     SalesChannel.WooCommerce,
-                    StoreUrl: string.Empty,
-                    ApiKey: payload.consumer_key,      // Usamos el payload
-                    ApiSecret: payload.consumer_secret)); // Usamos el payload
+                    StoreUrl:  storeUrl,
+                    ApiKey:    payload.consumer_key,
+                    ApiSecret: payload.consumer_secret));
 
-                Console.WriteLine($"[OAUTH WC] ✓ Credenciales guardadas para org={orgId}");
+                _logger.LogInformation("[OAUTH WC] ✓ Credenciales guardadas — org={OrgId} store={Store}", orgId, storeUrl);
                 return Ok("Autorización completada.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[OAUTH WC] Error: {ex.Message}");
+                _logger.LogError(ex, "[OAUTH WC] Error guardando credenciales para org={OrgId}", orgId);
                 return StatusCode(500, "Error guardando credenciales.");
             }
         }
@@ -244,12 +268,12 @@ namespace Inventory.API.Controllers
                     ApiSecret: tokens.AccessToken),
                     cancellationToken);
 
-                Console.WriteLine($"[OAUTH ML] ✓ Conectado: userId={tokens.UserId}");
+                _logger.LogInformation("[OAUTH ML] ✓ Conectado: userId={UserId}", tokens.UserId);
                 return Redirect($"{frontendBase}/integrations?connected=mercadolibre");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[OAUTH ML] Error: {ex.Message}");
+                _logger.LogError(ex, "[OAUTH ML] Error al conectar Mercado Libre");
                 return Redirect($"{frontendBase}/integrations?error=ml_failed");
             }
         }
@@ -350,3 +374,4 @@ namespace Inventory.API.Controllers
         public string key_permissions { get; set; }
     }
 }
+                                                 
