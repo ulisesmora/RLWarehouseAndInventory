@@ -163,16 +163,11 @@ namespace Inventory.API.Controllers
         /// </summary>
         [HttpPost("woocommerce/oauth/callback")]
         [AllowAnonymous]
-        public async Task<IActionResult> WooCommerceOAuthCallback(
-            [FromForm] string key_id,
-            [FromForm] string user_id,
-            [FromForm] string consumer_key,
-            [FromForm] string consumer_secret,
-            [FromForm] string key_permissions)
+        public async Task<IActionResult> WooCommerceOAuthCallback([FromBody] WooCommerceCallbackPayload payload)
         {
-            Console.WriteLine($"[OAUTH WC] callback user_id={user_id} permissions={key_permissions}");
+            Console.WriteLine($"[OAUTH WC] callback user_id={payload.user_id} permissions={payload.key_permissions}");
 
-            if (!Guid.TryParse(user_id, out var orgId))
+            if (!Guid.TryParse(payload.user_id, out var orgId))
             {
                 Console.WriteLine("[OAUTH WC] user_id inválido.");
                 return BadRequest("user_id inválido.");
@@ -180,17 +175,14 @@ namespace Inventory.API.Controllers
 
             try
             {
-                // Necesitamos el storeUrl — lo buscamos en el state activo para este orgId
-                // (Alternativamente: buscar en ChannelConfigs si ya existe una entrada sin credenciales)
-                // Por ahora guardamos sin storeUrl y el usuario puede completarlo
                 await _mediator.Send(new ConnectChannelCommand(
                     SalesChannel.WooCommerce,
-                    StoreUrl:  string.Empty,   // Se actualizará cuando tengamos el storeUrl
-                    ApiKey:    consumer_key,
-                    ApiSecret: consumer_secret));
+                    StoreUrl: string.Empty,
+                    ApiKey: payload.consumer_key,      // Usamos el payload
+                    ApiSecret: payload.consumer_secret)); // Usamos el payload
 
                 Console.WriteLine($"[OAUTH WC] ✓ Credenciales guardadas para org={orgId}");
-                return Ok("Autorización completada. Puedes cerrar esta ventana.");
+                return Ok("Autorización completada.");
             }
             catch (Exception ex)
             {
@@ -347,5 +339,14 @@ namespace Inventory.API.Controllers
     public class MapProductRequest
     {
         public Guid MaterialId { get; set; }
+    }
+
+    public class WooCommerceCallbackPayload
+    {
+        public int key_id { get; set; }
+        public string user_id { get; set; }
+        public string consumer_key { get; set; }
+        public string consumer_secret { get; set; }
+        public string key_permissions { get; set; }
     }
 }
