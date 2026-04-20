@@ -374,4 +374,3 @@ namespace Inventory.API.Controllers
         public string key_permissions { get; set; }
     }
 }
-                                                 
