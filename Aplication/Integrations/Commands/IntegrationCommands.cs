@@ -30,4 +30,32 @@ namespace Inventory.Application.Integrations.Commands
         Guid   MappingId,
         Guid   MaterialId
     ) : IRequest<Unit>;
+
+    /// <summary>Sincroniza el catálogo de productos del canal externo creando/actualizando ChannelProductMappings.</summary>
+    public record SyncProductsCommand(SalesChannel Channel) : IRequest<SyncProductsResultDto>;
+
+    /// <summary>
+    /// Procesa un pedido individual recibido por webhook.
+    /// El StoreIdentifier se usa para localizar el ChannelConfig (y por ende el tenant).
+    /// </summary>
+    public record ProcessWebhookOrderCommand(
+        SalesChannel Channel,
+        string       StoreIdentifier,   // dominio de la tienda p.ej. mystore.myshopify.com
+        string       RawPayload,        // body original para auditoría
+        string       ExtOrderId,
+        string       ExtOrderNum,
+        string       CustomerName,
+        string       CustomerEmail,
+        string       ShippingAddress,
+        DateTime     CreatedAt,
+        string       LineItemsJson      // serializado para no exponer tipos externos
+    ) : IRequest<Unit>;
+}
+
+public class SyncProductsResultDto
+{
+    public int Created  { get; set; }
+    public int Updated  { get; set; }
+    public int Matched  { get; set; }
+    public string Message { get; set; } = string.Empty;
 }

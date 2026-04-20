@@ -54,6 +54,23 @@ namespace Inventory.Application.Integrations.Services
             return wrapper?.Orders ?? new();
         }
 
+        // ── Fetch products ────────────────────────────────────────────────────
+        /// <summary>Trae todos los productos con sus variantes (SKUs).</summary>
+        public async Task<List<ShopifyProduct>> GetProductsAsync(
+            string storeDomain, string accessToken,
+            int limit = 250,
+            CancellationToken ct = default)
+        {
+            var url  = $"/admin/api/2024-01/products.json?limit={limit}&fields=id,title,variants";
+            var req  = BuildRequest(storeDomain, accessToken, url, HttpMethod.Get);
+            var resp = await _http.SendAsync(req, ct);
+            resp.EnsureSuccessStatusCode();
+
+            var json    = await resp.Content.ReadAsStringAsync(ct);
+            var wrapper = JsonSerializer.Deserialize<ShopifyProductsWrapper>(json, _opts);
+            return wrapper?.Products ?? new();
+        }
+
         // ── Helpers ───────────────────────────────────────────────────────────
         private static HttpRequestMessage BuildRequest(
             string storeDomain, string accessToken,
@@ -115,5 +132,27 @@ namespace Inventory.Application.Integrations.Services
         [JsonPropertyName("price")]      public string  Price     { get; set; } = "0";
 
         public decimal PriceDecimal => decimal.TryParse(Price, out var v) ? v : 0m;
+    }
+
+    // ── Product DTOs ──────────────────────────────────────────────────────────
+    public class ShopifyProductsWrapper
+    {
+        [JsonPropertyName("products")] public List<ShopifyProduct> Products { get; set; } = new();
+    }
+
+    public class ShopifyProduct
+    {
+        [JsonPropertyName("id")]       public long   Id       { get; set; }
+        [JsonPropertyName("title")]    public string Title    { get; set; } = string.Empty;
+        [JsonPropertyName("variants")] public List<ShopifyVariant> Variants { get; set; } = new();
+    }
+
+    public class ShopifyVariant
+    {
+        [JsonPropertyName("id")]         public long    Id        { get; set; }
+        [JsonPropertyName("product_id")] public long    ProductId { get; set; }
+        [JsonPropertyName("title")]      public string  Title     { get; set; } = string.Empty;
+        [JsonPropertyName("sku")]        public string  Sku       { get; set; } = string.Empty;
+        [JsonPropertyName("price")]      public string  Price     { get; set; } = "0";
     }
 }

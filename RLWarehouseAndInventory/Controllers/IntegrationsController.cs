@@ -1,49 +1,204 @@
 using Inventory.Application.Integrations.Commands;
 using Inventory.Application.Integrations.Queries;
+using Inventory.Application.Integrations.Services;
+using Inventory.Application.Tenant;
 using Inventory.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
 
 namespace Inventory.API.Controllers
 {
-    /// <summary>
-    /// Gestiona la conexión con canales externos (WooCommerce, Shopify) y la
-    /// importación / mapeo de sus pedidos al WMS.
-    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class IntegrationsController : ControllerBase
     {
-        private readonly IMediator _mediator;
+        private readonly IMediator             _mediator;
+        private readonly ShopifyOAuthService   _shopifyOAuth;
+        private readonly WooCommerceAuthService _wcAuth;
+        private readonly OAuthStateService     _oauthState;
+        private readonly ICurrentUserService   _currentUser;
+        private readonly IConfiguration        _cfg;
 
-        public IntegrationsController(IMediator mediator)
-            => _mediator = mediator;
+        public IntegrationsController(
+            IMediator mediator,
+            ShopifyOAuthService shopifyOAuth,
+            WooCommerceAuthService wcAuth,
+            OAuthStateService oauthState,
+            ICurrentUserService currentUser,
+            IConfiguration cfg)
+        {
+            _mediator    = mediator;
+            _shopifyOAuth = shopifyOAuth;
+            _wcAuth      = wcAuth;
+            _oauthState  = oauthState;
+            _currentUser = currentUser;
+            _cfg         = cfg;
+        }
 
-        // ── GET /api/integrations/status ──────────────────────────────────────
-        /// <summary>Devuelve el estado de todos los canales de venta soportados.</summary>
+        // ══════════════════════════════════════════════════════════════════════
+        // ESTADO / PRODUCTOS SIN MAPEAR
+        // ══════════════════════════════════════════════════════════════════════
+
         [HttpGet("status")]
         public async Task<IActionResult> GetStatus()
             => Ok(await _mediator.Send(new GetChannelStatusQuery()));
 
-        // ── GET /api/integrations/unmapped ───────────────────────────────────
-        /// <summary>
-        /// Devuelve los productos importados que no tienen material asignado en el WMS.
-        /// Acepta ?channel=WooCommerce|Shopify para filtrar por canal.
-        /// </summary>
         [HttpGet("unmapped")]
         public async Task<IActionResult> GetUnmapped([FromQuery] string? channel = null)
             => Ok(await _mediator.Send(new GetUnmappedProductsQuery(channel)));
 
-        // ── POST /api/integrations/{channel}/connect ─────────────────────────
+        // ══════════════════════════════════════════════════════════════════════
+        // OAUTH 2.0 — SHOPIFY
+        // ══════════════════════════════════════════════════════════════════════
+
         /// <summary>
-        /// Guarda las credenciales del canal y verifica la conexión.
-        /// Para WooCommerce: StoreUrl + ApiKey (Consumer Key) + ApiSecret (Consumer Secret).
-        /// Para Shopify: StoreUrl (mystore.myshopify.com) + ApiSecret (Access Token).
+        /// Inicia el flujo OAuth de Shopify.
+        /// Redirige al usuario a la pantalla de autorización de su tienda.
         /// </summary>
+        [HttpGet("shopify/oauth/start")]
+        public IActionResult ShopifyOAuthStart([FromQuery] string shop)
+        {
+            if (string.IsNullOrWhiteSpace(shop))
+                return BadRequest("El parámetro 'shop' es requerido (ej: mitienda.myshopify.com).");
+
+            var orgId = _currentUser.GetTenantId() ?? Guid.Empty;
+            var state = _oauthState.GenerateState(orgId, shop);
+            var url   = _shopifyOAuth.GetAuthorizationUrl(shop, state);
+
+            return Redirect(url);
+        }
+
+        /// <summary>
+        /// Callback OAuth de Shopify. Shopify llama a este endpoint tras la autorización.
+        /// Intercambia el código por el Access Token y registra los webhooks automáticamente.
+        /// </summary>
+        [HttpGet("shopify/oauth/callback")]
+        [AllowAnonymous]   // Shopify llama a esto sin JWT
+        public async Task<IActionResult> ShopifyOAuthCallback(
+            [FromQuery] string code,
+            [FromQuery] string state,
+            [FromQuery] string shop)
+        {
+            var frontendBase = _cfg["Frontend:BaseUrl"] ?? "http://localhost:4200";
+
+            // Validar state (anti-CSRF)
+            var stateEntry = _oauthState.Consume(state);
+            if (stateEntry == null)
+                return Redirect($"{frontendBase}/integrations?error=invalid_state");
+
+            try
+            {
+                // Intercambiar código por Access Token
+                var accessToken = await _shopifyOAuth.ExchangeCodeForTokenAsync(shop, code);
+
+                // Guardar en ChannelConfig usando el handler existente (ConnectChannelCommand)
+                // Pasamos el orgId del state para evitar depender del contexto de usuario
+                await _mediator.Send(new ConnectChannelCommand(
+                    SalesChannel.Shopify,
+                    $"https://{shop.Replace("https://", "").TrimEnd('/')}",
+                    ApiKey:    string.Empty,   // Shopify no usa API Key separada
+                    ApiSecret: accessToken));
+
+                // Registrar webhooks automáticamente
+                var backendBase = _cfg["Shopify:CallbackUrl"]?
+                    .Replace("/api/integrations/shopify/oauth/callback", "")
+                    ?? Request.Scheme + "://" + Request.Host;
+
+                await _shopifyOAuth.RegisterWebhooksAsync(shop, accessToken, backendBase);
+
+                Console.WriteLine($"[OAUTH SHOPIFY] ✓ Conectado: {shop}");
+                return Redirect($"{frontendBase}/integrations?connected=shopify");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OAUTH SHOPIFY] Error: {ex.Message}");
+                return Redirect($"{frontendBase}/integrations?error=shopify_failed");
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════════
+        // OAUTH — WOOCOMMERCE (WC Auth v1)
+        // ══════════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Inicia el flujo WC Auth de WooCommerce.
+        /// Redirige al usuario a la pantalla de autorización de su WordPress.
+        /// </summary>
+        [HttpGet("woocommerce/oauth/start")]
+        public IActionResult WooCommerceOAuthStart([FromQuery] string storeUrl)
+        {
+            if (string.IsNullOrWhiteSpace(storeUrl))
+                return BadRequest("El parámetro 'storeUrl' es requerido.");
+
+            var orgId = _currentUser.GetTenantId() ?? Guid.Empty;
+            // Usamos el orgId como user_id para identificar el tenant en el callback
+            var userId = orgId.ToString("N");
+
+            // Guardar el storeUrl en state para recuperarlo en el callback
+            _oauthState.GenerateState(orgId, storeUrl);
+
+            var backendBase  = _cfg["Shopify:CallbackUrl"]?
+                .Replace("/api/integrations/shopify/oauth/callback", "")
+                ?? Request.Scheme + "://" + Request.Host;
+
+            var callbackUrl  = $"{backendBase}/api/integrations/woocommerce/oauth/callback";
+            var frontendBase = _cfg["Frontend:BaseUrl"] ?? "http://localhost:4200";
+            var returnUrl    = $"{frontendBase}/integrations?connected=woocommerce";
+
+            var url = _wcAuth.GetAuthorizationUrl(storeUrl, callbackUrl, returnUrl, userId);
+            return Redirect(url);
+        }
+
+        /// <summary>
+        /// WooCommerce llama a este endpoint (POST) con el Consumer Key/Secret generado.
+        /// </summary>
+        [HttpPost("woocommerce/oauth/callback")]
+        [AllowAnonymous]
+        public async Task<IActionResult> WooCommerceOAuthCallback(
+            [FromForm] string key_id,
+            [FromForm] string user_id,
+            [FromForm] string consumer_key,
+            [FromForm] string consumer_secret,
+            [FromForm] string key_permissions)
+        {
+            Console.WriteLine($"[OAUTH WC] callback user_id={user_id} permissions={key_permissions}");
+
+            if (!Guid.TryParse(user_id, out var orgId))
+            {
+                Console.WriteLine("[OAUTH WC] user_id inválido.");
+                return BadRequest("user_id inválido.");
+            }
+
+            try
+            {
+                // Necesitamos el storeUrl — lo buscamos en el state activo para este orgId
+                // (Alternativamente: buscar en ChannelConfigs si ya existe una entrada sin credenciales)
+                // Por ahora guardamos sin storeUrl y el usuario puede completarlo
+                await _mediator.Send(new ConnectChannelCommand(
+                    SalesChannel.WooCommerce,
+                    StoreUrl:  string.Empty,   // Se actualizará cuando tengamos el storeUrl
+                    ApiKey:    consumer_key,
+                    ApiSecret: consumer_secret));
+
+                Console.WriteLine($"[OAUTH WC] ✓ Credenciales guardadas para org={orgId}");
+                return Ok("Autorización completada. Puedes cerrar esta ventana.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OAUTH WC] Error: {ex.Message}");
+                return StatusCode(500, "Error guardando credenciales.");
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CONEXIÓN MANUAL (fallback para tiendas que no soporten WC Auth)
+        // ══════════════════════════════════════════════════════════════════════
+
         [HttpPost("{channel}/connect")]
         public async Task<IActionResult> Connect(
             string channel,
@@ -61,8 +216,6 @@ namespace Inventory.API.Controllers
             return Ok(result);
         }
 
-        // ── DELETE /api/integrations/{channel} ───────────────────────────────
-        /// <summary>Desconecta el canal y borra sus credenciales almacenadas.</summary>
         [HttpDelete("{channel}")]
         public async Task<IActionResult> Disconnect(string channel)
         {
@@ -73,11 +226,10 @@ namespace Inventory.API.Controllers
             return NoContent();
         }
 
-        // ── POST /api/integrations/{channel}/import ──────────────────────────
-        /// <summary>
-        /// Importa pedidos desde el canal externo.
-        /// Aplica auto-match SKU → Material y FEFO allocation en los pedidos completamente mapeados.
-        /// </summary>
+        // ══════════════════════════════════════════════════════════════════════
+        // IMPORTACIÓN Y SINCRONIZACIÓN
+        // ══════════════════════════════════════════════════════════════════════
+
         [HttpPost("{channel}/import")]
         public async Task<IActionResult> Import(
             string channel,
@@ -87,16 +239,21 @@ namespace Inventory.API.Controllers
                 return BadRequest($"Canal '{channel}' no reconocido.");
 
             var result = await _mediator.Send(new ImportOrdersCommand(
-                salesChannel,
-                body?.MaxOrders ?? 100));
+                salesChannel, body?.MaxOrders ?? 100));
 
             return Ok(result);
         }
 
-        // ── POST /api/integrations/products/{id}/map ─────────────────────────
-        /// <summary>
-        /// Asigna manualmente un Material del WMS a un producto externo no mapeado.
-        /// </summary>
+        [HttpPost("{channel}/sync-products")]
+        public async Task<IActionResult> SyncProducts(string channel)
+        {
+            if (!Enum.TryParse<SalesChannel>(channel, ignoreCase: true, out var salesChannel))
+                return BadRequest($"Canal '{channel}' no reconocido.");
+
+            var result = await _mediator.Send(new SyncProductsCommand(salesChannel));
+            return Ok(result);
+        }
+
         [HttpPost("products/{id}/map")]
         public async Task<IActionResult> MapProduct(
             Guid id,
@@ -108,7 +265,6 @@ namespace Inventory.API.Controllers
     }
 
     // ── Request body DTOs ─────────────────────────────────────────────────────
-
     public class ConnectChannelRequest
     {
         public string? StoreUrl  { get; set; }

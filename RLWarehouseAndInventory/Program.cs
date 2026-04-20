@@ -4,6 +4,7 @@ using Inventory.Application.Auth.Services;
 using Inventory.Application.Categories.Handlers;
 using Inventory.Application.Integrations.Services;
 using Inventory.Application.Tenant;
+using Microsoft.Extensions.DependencyInjection;
 using Inventory.Domain;
 using Inventory.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -49,6 +50,11 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // ── HTTP Clients para integraciones externas ──────────────────────────────
 builder.Services.AddHttpClient<WooCommerceApiService>();
 builder.Services.AddHttpClient<ShopifyApiService>();
+builder.Services.AddHttpClient<ShopifyOAuthService>();
+
+// ── OAuth services ────────────────────────────────────────────────────────
+builder.Services.AddSingleton<OAuthStateService>();       // singleton: guarda estado en memoria
+builder.Services.AddScoped<WooCommerceAuthService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddHttpContextAccessor();
 

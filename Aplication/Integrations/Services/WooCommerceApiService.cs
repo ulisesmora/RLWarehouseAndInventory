@@ -54,6 +54,21 @@ namespace Inventory.Application.Integrations.Services
             return JsonSerializer.Deserialize<List<WcOrder>>(json, _opts) ?? new();
         }
 
+        // ── Fetch products ────────────────────────────────────────────────────
+        public async Task<List<WcProduct>> GetProductsAsync(
+            string storeUrl, string key, string secret,
+            int page = 1, int perPage = 100,
+            CancellationToken ct = default)
+        {
+            var url  = $"/wp-json/wc/v3/products?status=publish&page={page}&per_page={perPage}";
+            var req  = BuildRequest(storeUrl, key, secret, url, HttpMethod.Get);
+            var resp = await _http.SendAsync(req, ct);
+            resp.EnsureSuccessStatusCode();
+
+            var json = await resp.Content.ReadAsStringAsync(ct);
+            return JsonSerializer.Deserialize<List<WcProduct>>(json, _opts) ?? new();
+        }
+
         // ── Helpers ───────────────────────────────────────────────────────────
         private static HttpRequestMessage BuildRequest(
             string storeUrl, string key, string secret,
@@ -112,5 +127,15 @@ namespace Inventory.Application.Integrations.Services
         [JsonPropertyName("price")]       public string  Price      { get; set; } = "0";
 
         public decimal PriceDecimal => decimal.TryParse(Price, out var v) ? v : 0m;
+    }
+
+    // ── Product DTOs ──────────────────────────────────────────────────────────
+    public class WcProduct
+    {
+        [JsonPropertyName("id")]          public long    Id          { get; set; }
+        [JsonPropertyName("name")]        public string  Name        { get; set; } = string.Empty;
+        [JsonPropertyName("sku")]         public string  Sku         { get; set; } = string.Empty;
+        [JsonPropertyName("type")]        public string  Type        { get; set; } = string.Empty; // simple|variable
+        [JsonPropertyName("variations")]  public List<long> VariationIds { get; set; } = new();
     }
 }
