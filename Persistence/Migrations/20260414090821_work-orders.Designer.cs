@@ -3,6 +3,7 @@ using System;
 using Inventory.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Inventory.Persistence.Migrations
 {
     [DbContext(typeof(InventoryDbContext))]
-    partial class InventoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260414090821_work-orders")]
+    partial class workorders
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,124 +68,6 @@ namespace Inventory.Persistence.Migrations
                     b.HasIndex("ParentCategoryId");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("Inventory.Domain.ChannelConfig", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ApiKey")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ApiSecret")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Channel")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsConnected")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastError")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastSyncAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("StoreUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("TotalImported")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ChannelConfigs");
-                });
-
-            modelBuilder.Entity("Inventory.Domain.ChannelProductMapping", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Channel")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ExternalProductId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ExternalProductName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ExternalSku")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsAutoMapped")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("MatchMethod")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("MaterialId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MaterialId");
-
-                    b.ToTable("ChannelProductMappings");
                 });
 
             modelBuilder.Entity("Inventory.Domain.Lot", b =>
@@ -409,67 +294,6 @@ namespace Inventory.Persistence.Migrations
                     b.ToTable("Organization");
                 });
 
-            modelBuilder.Entity("Inventory.Domain.OutboundPickTask", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("MaterialId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("PickedQuantity")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("RequiredQuantity")
-                        .HasColumnType("numeric");
-
-                    b.Property<Guid>("SalesOrderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SalesOrderLineId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SourceStockItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MaterialId");
-
-                    b.HasIndex("SalesOrderId");
-
-                    b.HasIndex("SalesOrderLineId");
-
-                    b.HasIndex("SourceStockItemId");
-
-                    b.ToTable("OutboundPickTasks");
-                });
-
             modelBuilder.Entity("Inventory.Domain.ProductRecipe", b =>
                 {
                     b.Property<Guid>("Id")
@@ -513,9 +337,6 @@ namespace Inventory.Persistence.Migrations
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("text");
-
-                    b.Property<decimal>("YieldQuantity")
-                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
 
@@ -671,121 +492,6 @@ namespace Inventory.Persistence.Migrations
                     b.HasIndex("ProductRecipeId");
 
                     b.ToTable("RecipeIngredients", (string)null);
-                });
-
-            modelBuilder.Entity("Inventory.Domain.SalesOrder", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CustomerEmail")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CustomerName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ExternalReference")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<string>("OrderNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("ShipByDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ShippingAddress")
-                        .HasColumnType("text");
-
-                    b.Property<int>("SourceChannel")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SalesOrders");
-                });
-
-            modelBuilder.Entity("Inventory.Domain.SalesOrderLine", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("MaterialId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("OrderedQuantity")
-                        .HasColumnType("numeric");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("PickedQuantity")
-                        .HasColumnType("numeric");
-
-                    b.Property<Guid>("SalesOrderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MaterialId");
-
-                    b.HasIndex("SalesOrderId");
-
-                    b.ToTable("SalesOrderLines");
                 });
 
             modelBuilder.Entity("Inventory.Domain.StatusCatalog", b =>
@@ -1565,15 +1271,6 @@ namespace Inventory.Persistence.Migrations
                     b.Navigation("ParentCategory");
                 });
 
-            modelBuilder.Entity("Inventory.Domain.ChannelProductMapping", b =>
-                {
-                    b.HasOne("Inventory.Domain.Material", "Material")
-                        .WithMany()
-                        .HasForeignKey("MaterialId");
-
-                    b.Navigation("Material");
-                });
-
             modelBuilder.Entity("Inventory.Domain.Lot", b =>
                 {
                     b.HasOne("Inventory.Domain.Material", "Material")
@@ -1608,41 +1305,6 @@ namespace Inventory.Persistence.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("UnitOfMeasure");
-                });
-
-            modelBuilder.Entity("Inventory.Domain.OutboundPickTask", b =>
-                {
-                    b.HasOne("Inventory.Domain.Material", "Material")
-                        .WithMany()
-                        .HasForeignKey("MaterialId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Inventory.Domain.SalesOrder", "SalesOrder")
-                        .WithMany("PickTasks")
-                        .HasForeignKey("SalesOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Inventory.Domain.SalesOrderLine", "SalesOrderLine")
-                        .WithMany()
-                        .HasForeignKey("SalesOrderLineId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Inventory.Domain.StockItem", "SourceStockItem")
-                        .WithMany()
-                        .HasForeignKey("SourceStockItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Material");
-
-                    b.Navigation("SalesOrder");
-
-                    b.Navigation("SalesOrderLine");
-
-                    b.Navigation("SourceStockItem");
                 });
 
             modelBuilder.Entity("Inventory.Domain.ProductRecipe", b =>
@@ -1711,25 +1373,6 @@ namespace Inventory.Persistence.Migrations
                     b.Navigation("Material");
 
                     b.Navigation("ProductRecipe");
-                });
-
-            modelBuilder.Entity("Inventory.Domain.SalesOrderLine", b =>
-                {
-                    b.HasOne("Inventory.Domain.Material", "Material")
-                        .WithMany()
-                        .HasForeignKey("MaterialId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Inventory.Domain.SalesOrder", "SalesOrder")
-                        .WithMany("Lines")
-                        .HasForeignKey("SalesOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Material");
-
-                    b.Navigation("SalesOrder");
                 });
 
             modelBuilder.Entity("Inventory.Domain.StockItem", b =>
@@ -1943,13 +1586,6 @@ namespace Inventory.Persistence.Migrations
                     b.Navigation("AdditionalCosts");
 
                     b.Navigation("Ingredients");
-                });
-
-            modelBuilder.Entity("Inventory.Domain.SalesOrder", b =>
-                {
-                    b.Navigation("Lines");
-
-                    b.Navigation("PickTasks");
                 });
 
             modelBuilder.Entity("Inventory.Domain.StatusCatalog", b =>

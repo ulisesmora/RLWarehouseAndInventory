@@ -63,5 +63,8 @@ namespace Inventory.Domain
 
         // Propiedad calculada (útil para lógica, no se mapea necesariamente a BD)
         public decimal QuantityAvailable => QuantityOnHand - QuantityReserved;
+
+        public decimal AllocatedQuantity { get; set; } = 0m;
+
     }
 }

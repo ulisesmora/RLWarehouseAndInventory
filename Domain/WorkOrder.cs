@@ -5,14 +5,6 @@ using System.Text;
 
 namespace Inventory.Domain
 {
-    public enum WorkOrderStatus
-    {
-        Draft,          // Borrador (No afecta inventario)
-        Planned,        // Planeado (RESERVA los materiales en el almacén)
-        InProgress,     // En proceso (Están trabajando en las máquinas)
-        Completed,      // Terminado (Consume materiales, ingresa producto terminado)
-        Cancelled       // Cancelado (Libera las reservas de material)
-    }
     public class WorkOrder : BaseTenantEntity
     {
         // Ej: "WO-2026-0001" (Para que el operario la busque fácilmente)
@@ -37,7 +29,9 @@ namespace Inventory.Domain
         public DateTime? ActualCompletionDate { get; set; }
 
         // Estado actual de la orden
-        public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
+        public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Pending;
+
+        public ICollection<ProductionPickTask> PickTasks { get; set; } = new List<ProductionPickTask>();
 
         // Notas del supervisor (Ej: "Urge para el pedido VIP del e-commerce")
         public string? Notes { get; set; }

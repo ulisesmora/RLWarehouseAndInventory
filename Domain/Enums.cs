@@ -60,4 +60,56 @@ namespace Inventory.Domain
         AdjustmentOut = 14,     // Ajuste negativo (ej: conteo físico faltante, robo)
         Scrap = 15              // Merma / Desperdicio (dañado)
     }
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum WorkOrderStatus
+    {
+        Pending,        // Recién creada
+        Allocated,      // Inventario reservado (Nadie más lo puede tocar)
+        InProgress,     // Producción en curso
+        QualityControl, // Esperando revisión
+        Completed,      // Finalizada, stock descontado
+        Canceled
+    }
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum PickTaskStatus
+    {
+        Pending,    // Pendiente de recolección
+        InProgress, // Operador en camino
+        Completed,  // Material depositado en zona de producción/despacho
+        Cancelled   // Tarea cancelada (pedido/orden cancelada)
+    }
+
+    // ─── Outbound / Órdenes de Venta ──────────────────────────────────────────
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum SalesOrderStatus
+    {
+        Draft,          // Borrador — creada sin confirmar
+        Confirmed,      // Confirmada — stock reservado (AllocatedQuantity)
+        Picking,        // Operador recogiendo materiales
+        ReadyToShip,    // Todo pickeado — pendiente de despacho físico
+        Shipped,        // Despachado — StockMovement(Sale) registrado
+        Delivered,      // Confirmación de entrega recibida
+        Cancelled       // Cancelada — AllocatedQuantity liberado
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum SalesOrderLineStatus
+    {
+        Pending,            // Sin picks confirmados
+        PartiallyPicked,    // Algunos picks confirmados
+        Fulfilled           // Cantidad completa recogida
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum SalesChannel
+    {
+        Manual,         // Creada manualmente en el WMS
+        Internal,       // Transferencia interna entre almacenes
+        WooCommerce,    // Tienda WooCommerce/WordPress
+        Shopify,        // Tienda Shopify
+        MercadoLibre,   // Marketplace MercadoLibre
+        Amazon,         // Marketplace Amazon
+        Other           // Otro canal externo
+    }
 }

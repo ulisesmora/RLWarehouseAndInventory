@@ -2,6 +2,7 @@ using Inventory.Application;
 using Inventory.Application.Auth.Interfaces;
 using Inventory.Application.Auth.Services;
 using Inventory.Application.Categories.Handlers;
+using Inventory.Application.Integrations.Services;
 using Inventory.Application.Tenant;
 using Inventory.Domain;
 using Inventory.Persistence;
@@ -36,7 +37,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    // Esta l�nea hace la magia: convierte todos los enums a texto en JSON y Swagger
+    // Esta l�nea hace la magia: convierte todos los enums a texto en JSON y Swagger
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 }); ;
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -44,6 +45,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// ── HTTP Clients para integraciones externas ──────────────────────────────
+builder.Services.AddHttpClient<WooCommerceApiService>();
+builder.Services.AddHttpClient<ShopifyApiService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddHttpContextAccessor();
 
@@ -71,18 +76,18 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<InventoryDbContext>();
 
-        // Opci�n A: Solo validar conexi�n (lanza excepci�n si falla)
+        // Opci�n A: Solo validar conexi�n (lanza excepci�n si falla)
         // context.Database.CanConnect(); 
 
-        // Opci�n B (Recomendada en Dev): Aplica migraciones pendientes y crea la DB si no existe
+        // Opci�n B (Recomendada en Dev): Aplica migraciones pendientes y crea la DB si no existe
         context.Database.Migrate();
 
-        Console.WriteLine("--> Conexi�n a BD exitosa y migraciones aplicadas.");
+        Console.WriteLine("--> Conexi�n a BD exitosa y migraciones aplicadas.");
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocurri� un error durante la migraci�n o conexi�n a la base de datos.");
+        logger.LogError(ex, "Ocurri� un error durante la migraci�n o conexi�n a la base de datos.");
     }
 }
 

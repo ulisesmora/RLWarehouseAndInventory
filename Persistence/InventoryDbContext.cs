@@ -37,6 +37,18 @@ namespace Inventory.Persistence
         public DbSet<WorkOrder> WorkOrder => Set<WorkOrder>();
         public DbSet<Organization> Organization => Set<Organization>();
         public DbSet<User> User => Set<User>();
+        public DbSet<WorkOrderConsumption> WorkOrderConsumption => Set<WorkOrderConsumption>();
+        public DbSet<ProductionPickTask> ProductionPickTask => Set<ProductionPickTask>();
+
+        // ── Outbound / Ventas ──────────────────────────────────────────────────
+        public DbSet<SalesOrder>      SalesOrders      => Set<SalesOrder>();
+        public DbSet<SalesOrderLine>  SalesOrderLines  => Set<SalesOrderLine>();
+        public DbSet<OutboundPickTask> OutboundPickTasks => Set<OutboundPickTask>();
+
+        // ── Integraciones de canales externos ─────────────────────────────────
+        public DbSet<ChannelConfig>         ChannelConfigs         => Set<ChannelConfig>();
+        public DbSet<ChannelProductMapping> ChannelProductMappings => Set<ChannelProductMapping>();
+
 
         public Guid? CurrentTenantId => _currentUserService?.GetTenantId();
 

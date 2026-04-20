@@ -18,6 +18,8 @@ namespace Inventory.Domain
         public decimal EstimatedMachineHours { get; set; }
         public decimal EstimatedLaborHours { get; set; }
 
+        public decimal YieldQuantity { get; set; } = 1m;
+
         // Relaciones: Sus ingredientes y sus costos
         public ICollection<RecipeIngredient> Ingredients { get; set; } = new List<RecipeIngredient>();
         public ICollection<RecipeCost> AdditionalCosts { get; set; } = new List<RecipeCost>();
