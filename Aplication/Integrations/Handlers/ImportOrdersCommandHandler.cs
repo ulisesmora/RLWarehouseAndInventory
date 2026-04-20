@@ -16,18 +16,21 @@ namespace Inventory.Application.Integrations.Handlers
     public class ImportOrdersCommandHandler
         : IRequestHandler<ImportOrdersCommand, ImportResultDto>
     {
-        private readonly InventoryDbContext    _context;
-        private readonly WooCommerceApiService _wcService;
-        private readonly ShopifyApiService     _shService;
+        private readonly InventoryDbContext       _context;
+        private readonly WooCommerceApiService    _wcService;
+        private readonly ShopifyApiService        _shService;
+        private readonly MercadoLibreApiService   _mlService;
 
         public ImportOrdersCommandHandler(
             InventoryDbContext context,
-            WooCommerceApiService wcService,
-            ShopifyApiService     shService)
+            WooCommerceApiService   wcService,
+            ShopifyApiService       shService,
+            MercadoLibreApiService  mlService)
         {
             _context   = context;
             _wcService = wcService;
             _shService = shService;
+            _mlService = mlService;
         }
 
         public async Task<ImportResultDto> Handle(
@@ -112,6 +115,39 @@ namespace Inventory.Application.Integrations.Handlers
                             ShippingAddress: address,
                             CreatedAt:       o.CreatedAt,
                             Lines: o.LineItems.Select(l => (l.Sku, l.ProductId.ToString(), l.Title, l.Quantity, l.PriceDecimal)).ToList()
+                        ));
+                    }
+                }
+                else if (request.Channel == SalesChannel.MercadoLibre)
+                {
+                    // ApiKey guarda el ML user_id; ApiSecret guarda el access_token
+                    var mlOrders = await _mlService.GetOrdersAsync(
+                        config.ApiKey, config.ApiSecret,
+                        limit: request.MaxOrders, ct: cancellationToken);
+
+                    foreach (var o in mlOrders)
+                    {
+                        var buyer  = o.Buyer;
+                        var name   = buyer != null
+                            ? $"{buyer.FirstName} {buyer.LastName}".Trim()
+                            : "Comprador ML";
+                        if (string.IsNullOrWhiteSpace(name)) name = buyer?.Nickname ?? "Comprador ML";
+
+                        externalOrders.Add((
+                            ExtOrderId:      o.Id.ToString(),
+                            ExtOrderNum:     $"ML-{o.Id}",
+                            CustomerName:    name,
+                            CustomerEmail:   buyer?.Email ?? string.Empty,
+                            ShippingAddress: string.Empty,   // se obtiene con detalle; omitimos en batch
+                            CreatedAt:       o.DateCreated,
+                            Lines: o.OrderItems.Select(item =>
+                            (
+                                item.Sku ?? item.Item?.Sku ?? item.Item?.Id ?? string.Empty,
+                                item.Item?.Id ?? string.Empty,
+                                item.Item?.Title ?? "Producto ML",
+                                item.Quantity,
+                                item.UnitPrice
+                            )).ToList()
                         ));
                     }
                 }

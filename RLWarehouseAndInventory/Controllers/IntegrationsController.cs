@@ -17,27 +17,30 @@ namespace Inventory.API.Controllers
     [Authorize]
     public class IntegrationsController : ControllerBase
     {
-        private readonly IMediator             _mediator;
-        private readonly ShopifyOAuthService   _shopifyOAuth;
-        private readonly WooCommerceAuthService _wcAuth;
-        private readonly OAuthStateService     _oauthState;
-        private readonly ICurrentUserService   _currentUser;
-        private readonly IConfiguration        _cfg;
+        private readonly IMediator              _mediator;
+        private readonly ShopifyOAuthService    _shopifyOAuth;
+        private readonly WooCommerceAuthService  _wcAuth;
+        private readonly MercadoLibreOAuthService _mlOAuth;
+        private readonly OAuthStateService      _oauthState;
+        private readonly ICurrentUserService    _currentUser;
+        private readonly IConfiguration         _cfg;
 
         public IntegrationsController(
             IMediator mediator,
-            ShopifyOAuthService shopifyOAuth,
-            WooCommerceAuthService wcAuth,
-            OAuthStateService oauthState,
-            ICurrentUserService currentUser,
-            IConfiguration cfg)
+            ShopifyOAuthService      shopifyOAuth,
+            WooCommerceAuthService   wcAuth,
+            MercadoLibreOAuthService mlOAuth,
+            OAuthStateService        oauthState,
+            ICurrentUserService      currentUser,
+            IConfiguration           cfg)
         {
-            _mediator    = mediator;
-            _shopifyOAuth = shopifyOAuth;
-            _wcAuth      = wcAuth;
-            _oauthState  = oauthState;
-            _currentUser = currentUser;
-            _cfg         = cfg;
+            _mediator     = mediator;
+            _shopifyOAuth  = shopifyOAuth;
+            _wcAuth        = wcAuth;
+            _mlOAuth       = mlOAuth;
+            _oauthState    = oauthState;
+            _currentUser   = currentUser;
+            _cfg           = cfg;
         }
 
         // ══════════════════════════════════════════════════════════════════════
@@ -70,7 +73,8 @@ namespace Inventory.API.Controllers
             var state = _oauthState.GenerateState(orgId, shop);
             var url   = _shopifyOAuth.GetAuthorizationUrl(shop, state);
 
-            return Redirect(url);
+            return Ok(new { authorizationUrl = url });
+
         }
 
         /// <summary>
@@ -151,7 +155,7 @@ namespace Inventory.API.Controllers
             var returnUrl    = $"{frontendBase}/integrations?connected=woocommerce";
 
             var url = _wcAuth.GetAuthorizationUrl(storeUrl, callbackUrl, returnUrl, userId);
-            return Redirect(url);
+            return Ok(new { authorizationUrl = url });
         }
 
         /// <summary>
@@ -192,6 +196,69 @@ namespace Inventory.API.Controllers
             {
                 Console.WriteLine($"[OAUTH WC] Error: {ex.Message}");
                 return StatusCode(500, "Error guardando credenciales.");
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════════
+        // OAUTH — MERCADO LIBRE
+        // ══════════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Inicia el flujo OAuth 2.0 de Mercado Libre.
+        /// Redirige al usuario a la pantalla de autorización de ML.
+        /// </summary>
+        [HttpGet("mercadolibre/oauth/start")]
+        public IActionResult MercadoLibreOAuthStart()
+        {
+            var orgId = _currentUser.GetTenantId() ?? Guid.Empty;
+            var state = _oauthState.GenerateState(orgId);
+            var url   = _mlOAuth.GetAuthorizationUrl(state);
+            return Ok(new { authorizationUrl = url });
+        }
+
+        /// <summary>
+        /// Callback OAuth de Mercado Libre.
+        /// ML llama a este endpoint con code + state tras la autorización del usuario.
+        /// </summary>
+        [HttpGet("mercadolibre/oauth/callback")]
+        [AllowAnonymous]
+        public async Task<IActionResult> MercadoLibreOAuthCallback(
+            [FromQuery] string code,
+            [FromQuery] string state,
+            CancellationToken cancellationToken)
+        {
+            var frontendBase = _cfg["Frontend:BaseUrl"] ?? "http://localhost:4200";
+
+            var stateEntry = _oauthState.Consume(state);
+            if (stateEntry == null)
+                return Redirect($"{frontendBase}/integrations?error=invalid_state");
+
+            try
+            {
+                var tokens = await _mlOAuth.ExchangeCodeForTokenAsync(code);
+
+                // Guardamos:
+                //   StoreUrl  = URL de la API de ML (referencia)
+                //   ApiKey    = ML user_id  (necesario para consultar órdenes y productos)
+                //   ApiSecret = access_token (Bearer para llamadas a la API)
+                //
+                // NOTA: el refresh_token también se necesitaría para renovar el acceso.
+                // Por simplicidad lo guardamos en ApiKey con formato "userId|refreshToken"
+                // y en ApiSecret el access_token actual.
+                await _mediator.Send(new ConnectChannelCommand(
+                    SalesChannel.MercadoLibre,
+                    StoreUrl:  $"https://api.mercadolibre.com/users/{tokens.UserId}",
+                    ApiKey:    $"{tokens.UserId}|{tokens.RefreshToken}",
+                    ApiSecret: tokens.AccessToken),
+                    cancellationToken);
+
+                Console.WriteLine($"[OAUTH ML] ✓ Conectado: userId={tokens.UserId}");
+                return Redirect($"{frontendBase}/integrations?connected=mercadolibre");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OAUTH ML] Error: {ex.Message}");
+                return Redirect($"{frontendBase}/integrations?error=ml_failed");
             }
         }
 

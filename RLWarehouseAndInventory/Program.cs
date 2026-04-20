@@ -51,10 +51,13 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpClient<WooCommerceApiService>();
 builder.Services.AddHttpClient<ShopifyApiService>();
 builder.Services.AddHttpClient<ShopifyOAuthService>();
+builder.Services.AddHttpClient<MercadoLibreOAuthService>();
+builder.Services.AddHttpClient<MercadoLibreApiService>();
 
 // ── OAuth services ────────────────────────────────────────────────────────
 builder.Services.AddSingleton<OAuthStateService>();       // singleton: guarda estado en memoria
 builder.Services.AddScoped<WooCommerceAuthService>();
+builder.Services.AddScoped<MercadoLibreOAuthService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddHttpContextAccessor();
 
