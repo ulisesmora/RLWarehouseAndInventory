@@ -145,7 +145,9 @@ namespace Inventory.Application.Integrations.Services
 
         private static readonly JsonSerializerOptions _opts = new()
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            // WooCommerce puede devolver precios como número (19.99) o como string ("19.99")
+            NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
         };
     }
 
@@ -185,9 +187,8 @@ namespace Inventory.Application.Integrations.Services
         [JsonPropertyName("name")]        public string  Name       { get; set; } = string.Empty;
         [JsonPropertyName("sku")]         public string  Sku        { get; set; } = string.Empty;
         [JsonPropertyName("quantity")]    public decimal Quantity   { get; set; }
-        [JsonPropertyName("price")]       public string  Price      { get; set; } = "0";
-
-        public decimal PriceDecimal => decimal.TryParse(Price, out var v) ? v : 0m;
+        // WooCommerce envía price como número JSON (19.99), no como string
+        [JsonPropertyName("price")]       public decimal Price      { get; set; }
     }
 
     // ── Webhook DTOs ─────────────────────────────────────────────────────────

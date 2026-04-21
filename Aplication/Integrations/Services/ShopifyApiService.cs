@@ -95,7 +95,9 @@ namespace Inventory.Application.Integrations.Services
 
         private static readonly JsonSerializerOptions _opts = new()
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            // Shopify puede devolver precios como string ("19.99") o como número (19.99)
+            NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
         };
     }
 
@@ -137,9 +139,8 @@ namespace Inventory.Application.Integrations.Services
         [JsonPropertyName("title")]      public string  Title     { get; set; } = string.Empty;
         [JsonPropertyName("sku")]        public string  Sku       { get; set; } = string.Empty;
         [JsonPropertyName("quantity")]   public decimal Quantity  { get; set; }
-        [JsonPropertyName("price")]      public string  Price     { get; set; } = "0";
-
-        public decimal PriceDecimal => decimal.TryParse(Price, out var v) ? v : 0m;
+        // Puede venir como string "19.99" o número 19.99 según versión de API
+        [JsonPropertyName("price")]      public decimal Price     { get; set; }
     }
 
     // ── Product DTOs ──────────────────────────────────────────────────────────
@@ -161,6 +162,6 @@ namespace Inventory.Application.Integrations.Services
         [JsonPropertyName("product_id")] public long    ProductId { get; set; }
         [JsonPropertyName("title")]      public string  Title     { get; set; } = string.Empty;
         [JsonPropertyName("sku")]        public string  Sku       { get; set; } = string.Empty;
-        [JsonPropertyName("price")]      public string  Price     { get; set; } = "0";
+        [JsonPropertyName("price")]      public decimal Price     { get; set; }
     }
 }

@@ -76,7 +76,12 @@ namespace Inventory.Application.Integrations.Handlers
             // 4. Deserializar líneas del JSON
             var rawLines = JsonSerializer.Deserialize<List<WebhookLineItem>>(
                 request.LineItemsJson,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    // WooCommerce/Shopify pueden enviar price como número o como string
+                    NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+                }) ?? new();
 
             // 5. Resolver líneas con auto-match
             bool anyUnmapped = false;
@@ -117,7 +122,7 @@ namespace Inventory.Application.Integrations.Handlers
                 }
 
                 if (!materialId.HasValue) anyUnmapped = true;
-                resolvedLines.Add((materialId, line.Quantity, line.PriceDecimal, $"{line.Name} (SKU: {line.Sku})"));
+                resolvedLines.Add((materialId, line.Quantity, line.Price, $"{line.Name} (SKU: {line.Sku})"));
             }
 
             // 6. Crear SalesOrder
@@ -261,9 +266,7 @@ namespace Inventory.Application.Integrations.Handlers
         public string  Name      { get; set; } = string.Empty;
         public string  Sku       { get; set; } = string.Empty;
         public decimal Quantity  { get; set; }
-        public string  Price     { get; set; } = "0";
-        public decimal PriceDecimal => decimal.TryParse(Price,
-            System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 0m;
+        // WooCommerce envía price como número JSON — AllowReadingFromString en las opts lo cubre igual
+        public decimal Price     { get; set; }
     }
 }

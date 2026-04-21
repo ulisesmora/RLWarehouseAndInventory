@@ -91,7 +91,7 @@ namespace Inventory.Application.Integrations.Handlers
                             CustomerEmail:   o.Billing.Email,
                             ShippingAddress: address,
                             CreatedAt:       o.DateCreated,
-                            Lines: o.LineItems.Select(l => (l.Sku, l.ProductId.ToString(), l.Name, l.Quantity, l.PriceDecimal)).ToList()
+                            Lines: o.LineItems.Select(l => (l.Sku, l.ProductId.ToString(), l.Name, l.Quantity, l.Price)).ToList()
                         ));
                     }
                 }
@@ -117,7 +117,7 @@ namespace Inventory.Application.Integrations.Handlers
                             CustomerEmail:   o.Email,
                             ShippingAddress: address,
                             CreatedAt:       o.CreatedAt,
-                            Lines: o.LineItems.Select(l => (l.Sku, l.ProductId.ToString(), l.Title, l.Quantity, l.PriceDecimal)).ToList()
+                            Lines: o.LineItems.Select(l => (l.Sku, l.ProductId.ToString(), l.Title, l.Quantity, l.Price)).ToList()
                         ));
                     }
                 }
