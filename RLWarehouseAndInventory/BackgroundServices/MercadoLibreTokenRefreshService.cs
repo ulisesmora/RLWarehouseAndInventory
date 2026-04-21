@@ -54,9 +54,16 @@ namespace Inventory.API.BackgroundServices
             var context      = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
             var oauthService = scope.ServiceProvider.GetRequiredService<MercadoLibreOAuthService>();
 
+            return;
+
             var mlConfigs = await context.ChannelConfigs
                 .Where(c => c.Channel == SalesChannel.MercadoLibre && c.IsConnected)
                 .ToListAsync(ct);
+
+            if(mlConfigs == null)
+            {
+                return;
+            }
 
             if (mlConfigs.Count == 0)
             {
