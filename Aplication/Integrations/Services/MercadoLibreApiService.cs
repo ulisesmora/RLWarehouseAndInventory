@@ -26,19 +26,25 @@ namespace Inventory.Application.Integrations.Services
 
         /// <summary>
         /// Obtiene pedidos del vendedor. userId viene del token (ml_user_id guardado en ApiKey).
+        /// <paramref name="dateCreatedFrom"/> filtra pedidos creados a partir de esa fecha.
         /// </summary>
         public async Task<List<MlOrder>> GetOrdersAsync(
             string userId,
             string accessToken,
             int limit = 100,
+            DateTime? dateCreatedFrom = null,
             CancellationToken ct = default)
         {
             _http.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", accessToken);
 
             // ML pagina de 50 en 50 máximo
-            var perPage = Math.Min(limit, 50);
-            var url     = $"{ApiBase}/orders/search?seller={userId}&order.status=paid&limit={perPage}&sort=date_desc";
+            var perPage  = Math.Min(limit, 50);
+            var fromParam = dateCreatedFrom.HasValue
+                ? $"&order.date_created.from={dateCreatedFrom.Value.ToUniversalTime():yyyy-MM-ddTHH:mm:ss.000-00:00}"
+                : string.Empty;
+
+            var url = $"{ApiBase}/orders/search?seller={userId}&order.status=paid&limit={perPage}&sort=date_desc{fromParam}";
 
             var response = await _http.GetFromJsonAsync<MlOrderSearchResponse>(url, ct);
             return response?.Results ?? new List<MlOrder>();

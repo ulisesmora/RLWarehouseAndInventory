@@ -38,13 +38,21 @@ namespace Inventory.Application.Integrations.Services
         }
 
         // ── Fetch orders ──────────────────────────────────────────────────────
-        /// <summary>Trae pedidos abiertos (unfulfilled / partially_fulfilled).</summary>
+        /// <summary>
+        /// Trae pedidos abiertos (unfulfilled / partially_fulfilled).
+        /// <paramref name="createdAtMin"/> limita a pedidos creados desde esa fecha.
+        /// </summary>
         public async Task<List<ShopifyOrder>> GetOrdersAsync(
             string storeDomain, string accessToken,
             int limit = 250,
+            DateTime? createdAtMin = null,
             CancellationToken ct = default)
         {
-            var url  = $"/admin/api/2024-01/orders.json?status=open&fulfillment_status=unfulfilled&limit={limit}";
+            var minParam = createdAtMin.HasValue
+                ? $"&created_at_min={createdAtMin.Value.ToUniversalTime():yyyy-MM-ddTHH:mm:ssZ}"
+                : string.Empty;
+
+            var url  = $"/admin/api/2024-01/orders.json?status=open&fulfillment_status=unfulfilled&limit={limit}{minParam}";
             var req  = BuildRequest(storeDomain, accessToken, url, HttpMethod.Get);
             var resp = await _http.SendAsync(req, ct);
             resp.EnsureSuccessStatusCode();

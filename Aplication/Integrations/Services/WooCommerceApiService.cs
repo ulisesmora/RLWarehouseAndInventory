@@ -40,18 +40,26 @@ namespace Inventory.Application.Integrations.Services
         }
 
         // ── Fetch orders ──────────────────────────────────────────────────────
-        /// <summary>Trae pedidos en estado 'processing' (equivalente a Confirmed en el WMS).</summary>
+        /// <summary>
+        /// Trae pedidos en estado 'processing'.
+        /// <paramref name="after"/> limita a pedidos creados a partir de esa fecha (ISO 8601).
+        /// </summary>
         public async Task<List<WcOrder>> GetOrdersAsync(
             string storeUrl, string key, string secret,
             int page = 1, int perPage = 100,
+            DateTime? after = null,
             CancellationToken ct = default)
         {
-            var url    = $"/wp-json/wc/v3/orders?status=processing&page={page}&per_page={perPage}";
-            var req    = BuildRequest(storeUrl, key, secret, url, HttpMethod.Get);
-            var resp   = await _http.SendAsync(req, ct);
+            var afterParam = after.HasValue
+                ? $"&after={after.Value.ToUniversalTime():yyyy-MM-ddTHH:mm:ssZ}"
+                : string.Empty;
+
+            var url  = $"/wp-json/wc/v3/orders?status=processing&page={page}&per_page={perPage}{afterParam}";
+            var req  = BuildRequest(storeUrl, key, secret, url, HttpMethod.Get);
+            var resp = await _http.SendAsync(req, ct);
             resp.EnsureSuccessStatusCode();
 
-            var json   = await resp.Content.ReadAsStringAsync(ct);
+            var json = await resp.Content.ReadAsStringAsync(ct);
             return JsonSerializer.Deserialize<List<WcOrder>>(json, _opts) ?? new();
         }
 

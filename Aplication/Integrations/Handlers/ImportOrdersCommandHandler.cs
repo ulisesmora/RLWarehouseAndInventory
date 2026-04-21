@@ -63,7 +63,10 @@ namespace Inventory.Application.Integrations.Handlers
                 .Select(o => o.ExternalReference!)
                 .ToHashSetAsync(cancellationToken);
 
-            // 5. Fetch pedidos del canal externo
+            // 5. Fetch pedidos del canal externo — solo los de los últimos 7 días
+            //    Esto evita importar cientos de pedidos históricos al conectar por primera vez.
+            var importAfter = DateTime.UtcNow.AddDays(-7);
+
             List<(string ExtOrderId, string ExtOrderNum, string CustomerName, string CustomerEmail,
                   string ShippingAddress, DateTime CreatedAt,
                   List<(string Sku, string ProductId, string Name, decimal Qty, decimal Price)> Lines)>
@@ -75,7 +78,7 @@ namespace Inventory.Application.Integrations.Handlers
                 {
                     var wcOrders = await _wcService.GetOrdersAsync(
                         config.StoreUrl, config.ApiKey, config.ApiSecret,
-                        perPage: request.MaxOrders, ct: cancellationToken);
+                        perPage: request.MaxOrders, after: importAfter, ct: cancellationToken);
 
                     foreach (var o in wcOrders)
                     {
@@ -96,7 +99,7 @@ namespace Inventory.Application.Integrations.Handlers
                 {
                     var shOrders = await _shService.GetOrdersAsync(
                         config.StoreUrl, config.ApiSecret,
-                        limit: request.MaxOrders, ct: cancellationToken);
+                        limit: request.MaxOrders, createdAtMin: importAfter, ct: cancellationToken);
 
                     foreach (var o in shOrders)
                     {
@@ -123,7 +126,7 @@ namespace Inventory.Application.Integrations.Handlers
                     // ApiKey guarda el ML user_id; ApiSecret guarda el access_token
                     var mlOrders = await _mlService.GetOrdersAsync(
                         config.ApiKey, config.ApiSecret,
-                        limit: request.MaxOrders, ct: cancellationToken);
+                        limit: request.MaxOrders, dateCreatedFrom: importAfter, ct: cancellationToken);
 
                     foreach (var o in mlOrders)
                     {
@@ -159,7 +162,10 @@ namespace Inventory.Application.Integrations.Handlers
                 throw new InvalidOperationException($"Error al obtener pedidos de {request.Channel}: {ex.Message}");
             }
 
-            Console.WriteLine($"[IMPORT] Pedidos recibidos del canal: {externalOrders.Count}");
+            // Filtro en memoria como segunda línea de defensa (por si la API no filtra correctamente)
+            var beforeFilter = externalOrders.Count;
+            externalOrders = externalOrders.Where(o => o.CreatedAt >= importAfter).ToList();
+            Console.WriteLine($"[IMPORT] Pedidos recibidos: {beforeFilter} | Después de filtro 7 días: {externalOrders.Count}");
 
             // 6. Procesar cada pedido
             int imported = 0, skipped = 0, unmappedCount = 0;
