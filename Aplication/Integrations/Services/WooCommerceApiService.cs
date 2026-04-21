@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -69,6 +70,58 @@ namespace Inventory.Application.Integrations.Services
             return JsonSerializer.Deserialize<List<WcProduct>>(json, _opts) ?? new();
         }
 
+        // ── Webhook registration ──────────────────────────────────────────────
+        /// <summary>
+        /// Registra los webhooks de order.created y order.updated en la tienda WooCommerce.
+        /// Si ya existen webhooks apuntando a la misma deliveryUrl, los omite para evitar duplicados.
+        /// Devuelve la lista de webhooks creados (vacía si ya existían todos).
+        /// </summary>
+        public async Task<List<WcWebhook>> RegisterWebhooksAsync(
+            string storeUrl, string key, string secret,
+            string deliveryUrl,
+            CancellationToken ct = default)
+        {
+            var topics  = new[] { "order.created", "order.updated" };
+            var created = new List<WcWebhook>();
+
+            // 1. Obtener webhooks existentes para evitar duplicados
+            List<WcWebhook> existing;
+            try
+            {
+                var listReq  = BuildRequest(storeUrl, key, secret, "/wp-json/wc/v3/webhooks?per_page=100", HttpMethod.Get);
+                var listResp = await _http.SendAsync(listReq, ct);
+                var listJson = await listResp.Content.ReadAsStringAsync(ct);
+                existing = listResp.IsSuccessStatusCode
+                    ? JsonSerializer.Deserialize<List<WcWebhook>>(listJson, _opts) ?? new()
+                    : new();
+            }
+            catch { existing = new(); }
+
+            // 2. Crear los que no existan aún
+            foreach (var topic in topics)
+            {
+                var alreadyExists = existing.Any(w =>
+                    w.Topic == topic &&
+                    w.DeliveryUrl.TrimEnd('/').Equals(deliveryUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase));
+
+                if (alreadyExists) continue;
+
+                var body    = JsonSerializer.Serialize(new { name = $"bblazzr – {topic}", topic, delivery_url = deliveryUrl, status = "active" });
+                var postReq = BuildRequest(storeUrl, key, secret, "/wp-json/wc/v3/webhooks", HttpMethod.Post);
+                postReq.Content = new StringContent(body, Encoding.UTF8, "application/json");
+
+                var postResp = await _http.SendAsync(postReq, ct);
+                if (postResp.IsSuccessStatusCode)
+                {
+                    var json    = await postResp.Content.ReadAsStringAsync(ct);
+                    var webhook = JsonSerializer.Deserialize<WcWebhook>(json, _opts);
+                    if (webhook != null) created.Add(webhook);
+                }
+            }
+
+            return created;
+        }
+
         // ── Helpers ───────────────────────────────────────────────────────────
         private static HttpRequestMessage BuildRequest(
             string storeUrl, string key, string secret,
@@ -127,6 +180,16 @@ namespace Inventory.Application.Integrations.Services
         [JsonPropertyName("price")]       public string  Price      { get; set; } = "0";
 
         public decimal PriceDecimal => decimal.TryParse(Price, out var v) ? v : 0m;
+    }
+
+    // ── Webhook DTOs ─────────────────────────────────────────────────────────
+    public class WcWebhook
+    {
+        [JsonPropertyName("id")]           public long   Id          { get; set; }
+        [JsonPropertyName("name")]         public string Name        { get; set; } = string.Empty;
+        [JsonPropertyName("topic")]        public string Topic       { get; set; } = string.Empty;
+        [JsonPropertyName("delivery_url")] public string DeliveryUrl { get; set; } = string.Empty;
+        [JsonPropertyName("status")]       public string Status      { get; set; } = string.Empty;
     }
 
     // ── Product DTOs ──────────────────────────────────────────────────────────
