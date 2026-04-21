@@ -16,8 +16,13 @@ namespace Inventory.Application.SalesOrders.Commons.Mappings
 
             // ── SalesOrderLine → SalesOrderLineDto ────────────────────────────
             CreateMap<SalesOrderLine, SalesOrderLineDto>()
-                .ForMember(d => d.MaterialName, o => o.MapFrom(s => s.Material != null ? s.Material.Name : string.Empty))
-                .ForMember(d => d.Status,       o => o.MapFrom(s => s.Status.ToString()));
+                .ForMember(d => d.MaterialName,
+                    o => o.MapFrom(s => s.Material != null
+                        ? s.Material.Name
+                        : s.ExternalProductName ?? string.Empty))
+                .ForMember(d => d.ExternalProductName, o => o.MapFrom(s => s.ExternalProductName))
+                .ForMember(d => d.ExternalSku,         o => o.MapFrom(s => s.ExternalSku))
+                .ForMember(d => d.Status,              o => o.MapFrom(s => s.Status.ToString()));
 
             // ── OutboundPickTask → OutboundPickTaskDto ─────────────────────────
             CreateMap<OutboundPickTask, OutboundPickTaskDto>()

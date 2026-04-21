@@ -61,6 +61,10 @@ builder.Services.AddScoped<MercadoLibreOAuthService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddHttpContextAccessor();
 
+// ── Background services ───────────────────────────────────────────────────
+// Refresca el access_token de Mercado Libre cada 5 h (expira en 6 h)
+builder.Services.AddHostedService<Inventory.API.BackgroundServices.MercadoLibreTokenRefreshService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>

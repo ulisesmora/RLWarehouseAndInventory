@@ -243,24 +243,36 @@ namespace Inventory.Application.Integrations.Handlers
 
                     foreach (var (matId, qty, price, skuName) in resolvedLines)
                     {
-                        if (!matId.HasValue)
-                        {
-                            unmappedCount++;
-                            Console.WriteLine($"[IMPORT]   ⚠ Línea sin mapeo: {skuName}");
-                            continue; // línea ignorada hasta que el usuario la mapee
-                        }
+                        // Extraer nombre y SKU del campo skuName formateado: "Nombre (SKU: sku)"
+                        var rawName = skuName.Contains(" (SKU:")
+                            ? skuName[..skuName.LastIndexOf(" (SKU:", StringComparison.Ordinal)]
+                            : skuName;
+                        var rawSku  = skuName.Contains("SKU: ")
+                            ? skuName[(skuName.LastIndexOf("SKU: ", StringComparison.Ordinal) + 5)..].TrimEnd(')')
+                            : null;
 
                         var line = new SalesOrderLine
                         {
-                            Id              = Guid.NewGuid(),
-                            SalesOrderId    = salesOrder.Id,
-                            MaterialId      = matId.Value,
-                            OrderedQuantity = qty,
-                            UnitPrice       = price,
-                            PickedQuantity  = 0,
-                            Status          = SalesOrderLineStatus.Pending
+                            Id                  = Guid.NewGuid(),
+                            SalesOrderId        = salesOrder.Id,
+                            MaterialId          = matId,          // puede ser null (sin mapeo aún)
+                            ExternalProductName = rawName,
+                            ExternalSku         = rawSku,
+                            OrderedQuantity     = qty,
+                            UnitPrice           = price,
+                            PickedQuantity      = 0,
+                            Status              = matId.HasValue
+                                ? SalesOrderLineStatus.Pending
+                                : SalesOrderLineStatus.Pending    // igual Pending; sin material no hay picking aún
                         };
                         _context.SalesOrderLines.Add(line);
+
+                        if (!matId.HasValue)
+                        {
+                            unmappedCount++;
+                            Console.WriteLine($"[IMPORT]   ⚠ Línea sin mapeo (guardada igualmente): {skuName}");
+                            continue; // no allocar stock si no hay material
+                        }
 
                         // ── FEFO allocation solo si el pedido está Confirmed ───
                         if (salesOrder.Status == SalesOrderStatus.Confirmed)

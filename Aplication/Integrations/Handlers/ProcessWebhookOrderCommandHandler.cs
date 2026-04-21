@@ -144,20 +144,29 @@ namespace Inventory.Application.Integrations.Handlers
 
             foreach (var (matId, qty, price, skuName) in resolvedLines)
             {
-                if (!matId.HasValue) continue;
+                var rawName = skuName.Contains(" (SKU:")
+                    ? skuName[..skuName.LastIndexOf(" (SKU:", StringComparison.Ordinal)]
+                    : skuName;
+                var rawSku  = skuName.Contains("SKU: ")
+                    ? skuName[(skuName.LastIndexOf("SKU: ", StringComparison.Ordinal) + 5)..].TrimEnd(')')
+                    : null;
 
                 var line = new SalesOrderLine
                 {
-                    Id              = Guid.NewGuid(),
-                    OrganizationId  = orgId,
-                    SalesOrderId    = salesOrder.Id,
-                    MaterialId      = matId.Value,
-                    OrderedQuantity = qty,
-                    UnitPrice       = price,
-                    PickedQuantity  = 0,
-                    Status          = SalesOrderLineStatus.Pending
+                    Id                  = Guid.NewGuid(),
+                    OrganizationId      = orgId,
+                    SalesOrderId        = salesOrder.Id,
+                    MaterialId          = matId,   // puede ser null si no hay material mapeado
+                    ExternalProductName = rawName,
+                    ExternalSku         = rawSku,
+                    OrderedQuantity     = qty,
+                    UnitPrice           = price,
+                    PickedQuantity      = 0,
+                    Status              = SalesOrderLineStatus.Pending
                 };
                 _context.SalesOrderLines.Add(line);
+
+                if (!matId.HasValue) continue; // sin material no hay picking ni allocación
 
                 if (salesOrder.Status == SalesOrderStatus.Confirmed)
                     await AllocateStockFefoAsync(salesOrder, line, matId.Value, qty, orgId, cancellationToken);

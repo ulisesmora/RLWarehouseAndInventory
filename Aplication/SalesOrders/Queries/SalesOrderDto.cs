@@ -24,8 +24,14 @@ namespace Inventory.Application.SalesOrders.Queries
     public class SalesOrderLineDto
     {
         public Guid    Id               { get; set; }
-        public Guid    MaterialId       { get; set; }
+        /// <summary>Null cuando el producto externo aún no tiene material interno asignado.</summary>
+        public Guid?   MaterialId       { get; set; }
+        /// <summary>Nombre del material interno (vacío si no hay mapeo aún).</summary>
         public string  MaterialName     { get; set; } = string.Empty;
+        /// <summary>Nombre del producto tal como lo envió el canal de ventas.</summary>
+        public string? ExternalProductName { get; set; }
+        /// <summary>SKU externo del canal de ventas.</summary>
+        public string? ExternalSku      { get; set; }
         public decimal OrderedQuantity  { get; set; }
         public decimal PickedQuantity   { get; set; }
         public decimal UnitPrice        { get; set; }
